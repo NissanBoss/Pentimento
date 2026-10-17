@@ -6,11 +6,17 @@
 # something to run on a laptop.
 #
 #   sh testdata/calibrate.sh /tmp/cal 150
+#   sh testdata/calibrate.sh /tmp/cal 150 samsung
 #   PENTIMENTO_CALIBRATION=/tmp/cal go test -run Calibration -v -timeout 60m
+#
+# A group named third is the only one downloaded. calibrate.yml runs one
+# job per group: one after another, the download alone took over an hour.
 
 set -e
 out="${1:?give a folder to download into}"
 per="${2:-150}"
+only="${3:-}"
+want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 agent="pentimento-calibration/1 (https://github.com/NissanBoss/Pentimento)"
 api="https://commons.wikimedia.org/w/api.php"
 
@@ -60,26 +66,37 @@ fetch() {
     done
 }
 
-for c in Taken_with_Google_Pixel_7 Taken_with_Google_Pixel_6 Taken_with_Google_Pixel_8; do
-    list "$c" "$per"
-done | fetch pixel
-for c in Taken_with_Samsung_Galaxy_S23 Taken_with_Samsung_Galaxy_S10 Taken_with_Samsung_Galaxy_S21_Ultra_5G; do
-    list "$c" "$per"
-done | fetch samsung
-for c in Taken_with_iPhone_13 Taken_with_iPhone_14 Taken_with_iPhone_12; do
-    list "$c" "$per"
-done | fetch iphone
-for c in Screenshots_of_Android_12 Screenshots_of_Android_13 Screenshots_of_Android_14 Windows_10_screenshots Windows_7_screenshots MacOS_screenshots IOS_screenshots Wikipedia_iOS_app_screenshots Commons_iOS_app_screenshots Screenshots_of_Ubuntu_GNOME; do
-    list "$c" "$((per / 3))"
-done | fetch screenshots
+if want pixel; then
+    for c in Taken_with_Google_Pixel_7 Taken_with_Google_Pixel_6 Taken_with_Google_Pixel_8; do
+        list "$c" "$per"
+    done | fetch pixel
+fi
+if want samsung; then
+    for c in Taken_with_Samsung_Galaxy_S23 Taken_with_Samsung_Galaxy_S10 Taken_with_Samsung_Galaxy_S21_Ultra_5G; do
+        list "$c" "$per"
+    done | fetch samsung
+fi
+if want iphone; then
+    for c in Taken_with_iPhone_13 Taken_with_iPhone_14 Taken_with_iPhone_12; do
+        list "$c" "$per"
+    done | fetch iphone
+fi
+if want screenshots; then
+    for c in Screenshots_of_Android_12 Screenshots_of_Android_13 Screenshots_of_Android_14 Windows_10_screenshots Windows_7_screenshots MacOS_screenshots IOS_screenshots Wikipedia_iOS_app_screenshots Commons_iOS_app_screenshots Screenshots_of_Ubuntu_GNOME; do
+        list "$c" "$((per / 3))"
+    done | fetch screenshots
+fi
 
-mkdir -p "$out/cameras"
-gh_raw="https://raw.githubusercontent.com/ianare/exif-samples/5332a9cf0220e9c6c93f88a187daa90808051e10"
-curl -sS "https://api.github.com/repos/ianare/exif-samples/git/trees/5332a9cf0220e9c6c93f88a187daa90808051e10?recursive=1" |
-    grep -o '"path": *"jpg/[^"]*\.jpg"' | sed 's/"path": *"//; s/"$//' | while read -r p; do
-        curl -sSfL -o "$out/cameras/$(echo "$p" | tr '/' '_')" "$gh_raw/$p" || true
-    done
+if want cameras; then
+    mkdir -p "$out/cameras"
+    gh_raw="https://raw.githubusercontent.com/ianare/exif-samples/5332a9cf0220e9c6c93f88a187daa90808051e10"
+    curl -sS "https://api.github.com/repos/ianare/exif-samples/git/trees/5332a9cf0220e9c6c93f88a187daa90808051e10?recursive=1" |
+        grep -o '"path": *"jpg/[^"]*\.jpg"' | sed 's/"path": *"//; s/"$//' | while read -r p; do
+            curl -sSfL -o "$out/cameras/$(echo "$p" | tr '/' '_')" "$gh_raw/$p" || true
+        done
+fi
 
 for g in pixel samsung iphone screenshots cameras; do
+    [ -d "$out/$g" ] || continue
     echo "$g: $(ls "$out/$g" | wc -l) files, $(du -sh "$out/$g" | cut -f1)"
 done

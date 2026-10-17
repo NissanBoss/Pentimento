@@ -28,6 +28,10 @@ func TestCalibration(t *testing.T) {
 	var table []string
 	for _, g := range groups {
 		files, _ := filepath.Glob(filepath.Join(dir, g, "*"))
+		if len(files) == 0 {
+			// calibrate.yml downloads one group per job.
+			continue
+		}
 		sort.Strings(files)
 		counts := map[string]int{}
 		read, gaps := 0, 0

@@ -18,6 +18,14 @@ on:
 
 jobs:
   calibrate:
+    # One job per group, side by side: one after another, the download
+    # alone took over an hour, and with the stripped photos added the
+    # whole run came near the two hours a job may take.
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [pixel, samsung, iphone, screenshots, cameras]
+    name: calibrate ${{ matrix.group }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -28,7 +36,7 @@ jobs:
           go-version: stable
 
       - name: Download the calibration set
-        run: sh testdata/calibrate.sh "$RUNNER_TEMP/cal" "${{ github.event.inputs.per || '150' }}"
+        run: sh testdata/calibrate.sh "$RUNNER_TEMP/cal" "${{ github.event.inputs.per || '150' }}" ${{ matrix.group }}
 
       - name: Count
         run: PENTIMENTO_CALIBRATION="$RUNNER_TEMP/cal" go test -run TestCalibration -v -timeout 100m .
