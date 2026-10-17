@@ -29,6 +29,27 @@ jobs:
       - name: Check every one of them
         run: PENTIMENTO_SAMPLES="$RUNNER_TEMP/samples" go test -run TestSamples -v .
 
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick fonts-dejavu-core
+
+      - name: Make the bench
+        run: sh testdata/bench.sh "$RUNNER_TEMP/bench"
+
+      - name: Count what is found
+        run: PENTIMENTO_BENCH="$RUNNER_TEMP/bench" go test -run TestBench -v .
+
   tools:
     runs-on: ubuntu-latest
     timeout-minutes: 15
