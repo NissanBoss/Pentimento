@@ -169,7 +169,7 @@ var kindsOfHit = map[string]hitKind{
 		tag: "CARRIES ", weight: Carries,
 		one:  "The phone added more after the end of the picture",
 		many: "%d pictures have more after their end, added by the phone",
-		advice: "Samsung phones add a trailer after the end of the JPEG, which most metadata tools leave alone. " +
+		advice: "Samsung phones add a trailer after the end of the picture, which most metadata tools leave alone. " +
 			"Some of what it holds says where you were or what was done to the photo after it was taken.",
 	},
 	"tail-other": {

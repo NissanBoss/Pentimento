@@ -34,7 +34,7 @@ func (c *run) jpeg(where string, data []byte) {
 				c.copyOf(where, p, e)
 			}
 		case roleOriginal:
-			line := e.what + ", " + describe(e)
+			line := capital(e.what) + ", " + describe(e) + "."
 			var more []string
 			if p := pic(); p != nil {
 				if img, err := decodePicture(e.data); err == nil {

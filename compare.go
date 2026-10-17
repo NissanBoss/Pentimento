@@ -281,7 +281,9 @@ func outsideShare(c grid, p placement) float64 {
 				flat++
 			}
 		}
-		if flat*10 >= len(far)*9 {
+		// All of it, near enough: the margin of a letter is paper too, and
+		// the two lines of text left in it are what the crop took off.
+		if flat*100 >= len(far)*99 {
 			return 0
 		}
 	}

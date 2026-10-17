@@ -151,8 +151,12 @@ func (c *run) inspect(where, name string, data []byte, depth int) {
 		}
 		return
 	}
-	c.read++
-	c.checked[kind]++
+	// Files inside files are looked at, and not counted: the summary
+	// says what was given, not how many pictures were in the documents.
+	if depth == 0 {
+		c.read++
+		c.checked[kind]++
+	}
 }
 
 func (c *run) report() *Report {
