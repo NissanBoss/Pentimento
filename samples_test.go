@@ -152,8 +152,18 @@ func TestMadeByTools(t *testing.T) {
 			}
 			c := newRun(shower{})
 			c.inspect(name, name, data, 0)
+			k := strings.SplitN(name, "__", 2)[0]
+			if k == "report" {
+				for kind, hits := range c.hits {
+					for _, h := range hits {
+						t.Logf("%s: %s", kind, h.what)
+					}
+				}
+				t.Logf("%d kinds found, %d gaps", len(c.hits), len(c.gaps))
+				return
+			}
 			var want []string
-			if k := strings.SplitN(name, "__", 2)[0]; k != "clean" {
+			if k != "clean" {
 				want = strings.Split(k, "+")
 			}
 			c.only(t, want...)

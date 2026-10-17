@@ -64,7 +64,6 @@ var unreadKinds = map[string]string{
 	"avif":   "AVIF images",
 	"tiff":   "TIFF images, which can keep a Photoshop file's layers",
 	"psd":    "Photoshop files, which are layers by design",
-	"pdf":    "PDFs, which Baggage and x-ray read",
 	"locked": "documents locked with a password, or in the old binary formats",
 }
 

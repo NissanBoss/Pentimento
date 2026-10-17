@@ -52,3 +52,52 @@ open("crop-tail__pillow-overwrite.png", "wb").write(data)
 PY
 rm -f page.png page.jpg thumb.jpg old.png new.png
 ls -la
+
+# PDFs, made by PyMuPDF the way a script or a PDF tool makes them: a box
+# drawn over a picture, an area marked for redaction and left at that, the
+# same area redacted for real, and a filled comment box.
+python3 - <<'PY'
+import fitz
+from PIL import Image
+Image.open("crop-tail__pillow-overwrite.png").convert("RGB").save("pic.jpg", quality=90)
+area = fitz.Rect(160, 140, 360, 170)
+
+def page_with_picture():
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_image(fitz.Rect(100, 100, 500, 300), filename="pic.jpg")
+    return doc, page
+
+doc, page = page_with_picture()
+page.draw_rect(area, color=(0, 0, 0), fill=(0, 0, 0))
+doc.save("pdf-covered__pymupdf-box.pdf")
+
+doc, page = page_with_picture()
+page.add_redact_annot(area, fill=(0, 0, 0))
+doc.save("pdf-redact__pymupdf-marked.pdf")
+page.apply_redactions()
+doc.save("clean__pymupdf-applied.pdf")
+
+doc, page = page_with_picture()
+a = page.add_rect_annot(area)
+a.set_colors(stroke=(0, 0, 0), fill=(0, 0, 0))
+a.update()
+doc.save("pdf-annotation__pymupdf-square.pdf")
+PY
+rm -f pic.jpg
+
+# What LibreOffice makes of a slide and a document with cropped pictures
+# and a box over a picture, exported to PDF. These are reported, not
+# checked against a name: they are what the export does, and the test
+# prints it.
+for f in 54542_cropped_bitmap.pptx; do
+    curl -sSfL -o "$f" "https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/slideshow/$f"
+done
+curl -sSfL -o croppedAndRotated.odt "https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/croppedAndRotated.odt"
+curl -sSfL -o ImageCrop.docx "https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/ImageCrop.docx"
+soffice --headless --convert-to pdf 54542_cropped_bitmap.pptx croppedAndRotated.odt ImageCrop.docx >/dev/null 2>&1 || true
+for f in 54542_cropped_bitmap croppedAndRotated ImageCrop; do
+    [ -s "$f.pdf" ] && mv "$f.pdf" "report__libreoffice-$f.pdf"
+    rm -f "$f.pptx" "$f.odt" "$f.docx"
+done
+ls -la

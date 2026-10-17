@@ -17,6 +17,7 @@ var kindOrder = []string{
 	"crop-tail", "crop-sealed", "jpeg-tail", "gif-tail",
 	"original-inside", "preview-differs",
 	"office-crop", "office-effect", "office-covered",
+	"pdf-redact", "pdf-crop", "pdf-covered", "pdf-annotation",
 	"drawing-pages", "drawing-outside", "drawing-deleted", "drawing-crop",
 	"shows-through", "mosaic",
 	"motion", "depth", "phone-trailer", "tail-other",
@@ -100,6 +101,38 @@ var kindsOfHit = map[string]hitKind{
 		advice: "A box drawn over a picture is a second object on top of the first. Moving it, deleting it or " +
 			"opening the file in anything else shows what is under it. Cover the picture in an image editor and " +
 			"put the flattened picture back in.",
+	},
+	"pdf-redact": {
+		tag: "KEPT    ", weight: Kept,
+		one:  "An area of a PDF is marked for redaction, and was never redacted",
+		many: "%d areas of PDFs are marked for redaction, and were never redacted",
+		advice: "Marking an area for redaction draws a box and changes nothing under it. The redaction happens when " +
+			"it is applied, in Acrobat \"Apply Redactions\", and then the text and the pixels under it are taken out " +
+			"of the file. Until then anybody who opens the file can read what is under the mark.",
+	},
+	"pdf-crop": {
+		tag: "KEPT    ", weight: Kept,
+		one:  "A picture in a PDF is shown cropped, and the whole of it is in the file",
+		many: "%d pictures in PDFs are shown cropped, and the whole of each is in the file",
+		advice: "A PDF can show part of a picture by drawing all of it through a clip, and that is how a crop made " +
+			"in a word processor often reaches the PDF. Any tool that takes the pictures out of a PDF gives back the " +
+			"whole of each. Crop the picture in an image editor before putting it in the document.",
+	},
+	"pdf-covered": {
+		tag: "KEPT    ", weight: Kept,
+		one:  "Something is drawn over a picture in a PDF, and the picture is whole underneath",
+		many: "%d pictures in PDFs have something drawn over them, and are whole underneath",
+		advice: "A box drawn over a picture in a PDF is drawn after it, and the picture is still all there: any tool " +
+			"that takes the pictures out of the file, or any editor that moves the box, shows it. Cover the picture in " +
+			"an image editor, or redact it with a tool that rewrites the picture's pixels.",
+	},
+	"pdf-annotation": {
+		tag: "KEPT    ", weight: Kept,
+		one:  "Something drawn as an annotation covers part of a PDF page",
+		many: "%d things drawn as annotations cover parts of PDF pages",
+		advice: "A box, a scribble or a stamp added with a PDF reader's comment tools is an annotation, laid on top of " +
+			"the page and not part of it. Deleting it, hiding comments, or printing without them shows what is under " +
+			"it, and the text under it can be copied as it is.",
 	},
 	"drawing-pages": {
 		tag: "KEPT    ", weight: Kept,

@@ -143,6 +143,8 @@ func (c *run) inspect(where, name string, data []byte, depth int) {
 		c.heic(where, data)
 	case "office":
 		c.office(where, data, depth)
+	case "pdf":
+		c.pdf(where, data, depth)
 	case "text-drawing":
 		c.textDrawing(where, data, depth)
 	default:
@@ -226,6 +228,7 @@ var kindNames = map[string][2]string{
 	"gif":          {"GIF", "GIFs"},
 	"heic":         {"HEIC photo", "HEIC photos"},
 	"office":       {"document", "documents"},
+	"pdf":          {"PDF", "PDFs"},
 	"text-drawing": {"drawing", "drawings"},
 }
 

@@ -65,3 +65,19 @@ samsung-ballot.jpg	https://upload.wikimedia.org/wikipedia/commons/d/df/2019_Gene
 samsung-live-focus.jpg	https://upload.wikimedia.org/wikipedia/commons/d/d5/2023-03-31-deinboek-daym-buehne-purkersdorf.jpg	original-inside,depth,phone-trailer
 samsung-sign.jpg	https://upload.wikimedia.org/wikipedia/commons/2/22/%22Tauben_bitte_nicht_f%C3%BCttern%22-Schild_20191017.jpg	phone-trailer
 samsung-screenshot.png	https://upload.wikimedia.org/wikipedia/commons/2/2e/Cfait_task_manager_v0.5.2_screenshot_%28Android%29.png	phone-trailer
+# PDFs from x-ray, the Free Law Project's detector of bad redactions: its
+# tricky files with nothing wrong in them, and the one it says it cannot
+# get right, where the redactions are filled squares laid on as comments.
+xray-no_bad_redactions.2.1.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.2.1.pdf	-
+xray-no_bad_redactions.3.2.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.3.2.pdf	-
+xray-no_bad_redactions.4.1.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.4.1.pdf	-
+xray-no_bad_redactions.6.2.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.6.2.pdf	-
+xray-no_bad_redactions.7.1.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.7.1.pdf	-
+xray-no_bad_redactions.8.1.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/no_bad_redactions.8.1.pdf	-
+xray-rectangles_no.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/rectangles_no.pdf	-
+xray-unfilled_rect.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/unfilled_rect.pdf	-
+xray-whitespace_redactions.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/whitespace_redactions.pdf	-
+xray-ok_words.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/ok_words.pdf	-
+xray-partial_intersections_ok.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/partial_intersections_ok.pdf	-
+xray-rect_ordering_0.8.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/rect_ordering_0.8.pdf	-
+xray-hidden-text.pdf	https://raw.githubusercontent.com/freelawproject/x-ray/4dd5b0bcc5cdd774b9e82fc47b1d7208e92e4779/tests/assets/hidden_text_on_visible_text.pdf	pdf-annotation

@@ -42,7 +42,8 @@ jobs:
       - name: Install the tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq imagemagick libjpeg-turbo-progs libimage-exiftool-perl python3-pil fonts-dejavu-core
+          sudo apt-get install -y -qq imagemagick libjpeg-turbo-progs libimage-exiftool-perl python3-pil fonts-dejavu-core libreoffice-impress libreoffice-writer
+          pip install --quiet pymupdf
 
       - name: Make the files
         run: sh testdata/tools.sh "$RUNNER_TEMP/tools"
