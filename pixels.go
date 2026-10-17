@@ -280,6 +280,13 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block, tol int) (mosaic,
 	// least that, and smaller patches of squares in real screenshots were
 	// icons, four blocks wide, every one of them.
 	across := r.Dx() / block
+	// In a photo, patches of six or seven blocks of eight came out of JPEG
+	// itself twice in nine hundred, both under seventy pixels wide in
+	// photos four thousand wide; the one real mosaic in the same photos,
+	// a karaoke screen showing its own pixelated preview, was five hundred.
+	if tol > 0 && r.Dx() < max(64, w/60) {
+		return mosaic{}, false
+	}
 	if len(colours) < 4 || across < 6 || across*bands < 12 {
 		return mosaic{}, false
 	}
@@ -385,6 +392,13 @@ func seeThrough(px []uint32, w, h int, lossless bool) []cover {
 		bx.x0, bx.y0, bx.x1, bx.y1 = core(labels, w, l, bx.x0, bx.y0, bx.x1, bx.y1)
 		bw, bh := bx.x1-bx.x0+1, bx.y1-bx.y0+1
 		if bw < 16 || bh < 8 || bw*bh < 400 || bw*bh > w*h/3 {
+			continue
+		}
+		// In a photo, a small bright rectangle with faint marks in it is a
+		// window, a sign or a label far more often than a cover: all
+		// thirteen found in nine hundred phone photos were, every one of
+		// them narrower than a fiftieth of the photo.
+		if !lossless && (bw < max(40, w/50) || bh < 16) {
 			continue
 		}
 		inside := 0

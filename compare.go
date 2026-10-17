@@ -111,10 +111,23 @@ func compareCopies(main, copied image.Image) comparison {
 	if score < 0.8 && sameShape {
 		r.outside = 0
 	}
+	// A Pixel corrects the distortion of its lens after making the
+	// thumbnail, and the correction trims a few per cent off every edge:
+	// the thumbnail of a third of the Pixel photos in the calibration
+	// showed four or five per cent more than the photo, in the same shape.
+	// A crop by hand that keeps the shape and takes less than a tenth is
+	// rarer than that, and hides little.
+	if sameShape && r.outside < 0.10 {
+		r.outside = 0
+	}
 	var shifted int
 	r.changed, r.share, shifted = changedParts(M, C, fine, mb)
+	r.changed = awayFromEdges(r.changed, mb)
 	if lensMoved(r.changed, mb) {
 		r.changed, r.share = nil, 0
+	}
+	if len(r.changed) == 0 {
+		r.share = 0
 	}
 	// Below this the picture was straightened or warped since the copy
 	// was made, and the parts that differ are every edge in it, not what
@@ -142,6 +155,10 @@ func findInside(m, c grid) (placement, float64) {
 }
 
 func findInsideBy(m, c grid, step float64) (placement, float64) {
+	return findInsideDown(m, c, step, 0.33)
+}
+
+func findInsideDown(m, c grid, step, least float64) (placement, float64) {
 	aspect := float64(m.w) / float64(m.h)
 	fitW, fitH := float64(c.w), float64(c.w)/aspect
 	if fitH > float64(c.h) {
@@ -158,7 +175,7 @@ func findInsideBy(m, c grid, step float64) (placement, float64) {
 			best, bestScore = p, s
 		}
 	}
-	for s := 1.0; s >= 0.33; s -= step {
+	for s := 1.0; s >= least; s -= step {
 		w, h := int(math.Round(fitW*s)), int(math.Round(fitH*s))
 		if w < 6 || h < 6 {
 			break
@@ -371,22 +388,25 @@ func changedParts(m, c grid, p placement, frame image.Rectangle) (parts []image.
 				}
 			}
 		}
-		// Unlike blocks against the edge of the frame are what lens
-		// correction does: a Pixel corrects its ultra-wide shots after
-		// making the thumbnail, and the corners move. Nothing an edit
-		// covers is flat at the edge and unlike in the middle by accident,
-		// so a flat block anywhere still counts.
-		edge := x0 == 0 || y0 == 0 || x1 == bw-1 || y1 == bh-1
-		if edge && !anyFlat {
+		// Only a part with something flat in it counts: the picture has
+		// nothing where the copy has something, which is what a box or a
+		// blur leaves. A part that is only unlike, the same things in both
+		// but a few pixels apart, is lens correction moving them, and in
+		// the calibration it was every one of the eighteen Pixel photos
+		// that differed from their own thumbnails in the middle. Something
+		// painted over with something plausible is missed for this, and
+		// the README says so. The unlike parts are still counted, for the
+		// straightened picture.
+		if !anyFlat {
+			if size >= minPart {
+				shifted++
+			}
 			continue
 		}
 		if size < minPart || !stillDiffers(small, cp, x0*blk, y0*blk, (x1+1)*blk, (y1+1)*blk) {
 			continue
 		}
 		kept += size
-		if !anyFlat {
-			shifted++
-		}
 		parts = append(parts, image.Rect(
 			frame.Min.X+int(float64(x0*blk)*sx), frame.Min.Y+int(float64(y0*blk)*sy),
 			frame.Min.X+int(math.Ceil(float64((x1+1)*blk)*sx)), frame.Min.Y+int(math.Ceil(float64((y1+1)*blk)*sy))))
@@ -550,4 +570,23 @@ func trimmedNCC(small, c grid, p placement) float64 {
 		return 0
 	}
 	return (kab - ka*kb/kn) / math.Sqrt(va*vb)
+}
+
+// awayFromEdges drops the parts that touch the outer band of the frame.
+// Lens correction moves the edges of a photo against its thumbnail by
+// different amounts in different places, which no placement undoes: in
+// the calibration, twenty three Pixel photos differed from their own
+// thumbnail in one place each, every one of them against an edge, and
+// none of them was an edit. A cover at the very edge of a picture is
+// missed for this, and the README says so.
+func awayFromEdges(parts []image.Rectangle, frame image.Rectangle) []image.Rectangle {
+	mx, my := frame.Dx()*6/100, frame.Dy()*6/100
+	inner := image.Rect(frame.Min.X+mx, frame.Min.Y+my, frame.Max.X-mx, frame.Max.Y-my)
+	var out []image.Rectangle
+	for _, p := range parts {
+		if p.In(inner) {
+			out = append(out, p)
+		}
+	}
+	return out
 }

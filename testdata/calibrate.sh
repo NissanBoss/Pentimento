@@ -66,10 +66,10 @@ done | fetch pixel
 for c in Taken_with_Samsung_Galaxy_S23 Taken_with_Samsung_Galaxy_S10 Taken_with_Samsung_Galaxy_S21_Ultra_5G; do
     list "$c" "$per"
 done | fetch samsung
-for c in Taken_with_Apple_iPhone_13 Taken_with_Apple_iPhone_12 Taken_with_Apple_iPhone_14_Pro; do
+for c in Taken_with_iPhone_13 Taken_with_iPhone_14 Taken_with_iPhone_12; do
     list "$c" "$per"
 done | fetch iphone
-for c in Screenshots_of_Android Screenshots_of_Windows_11 Screenshots_of_Windows_10 Screenshots_of_macOS Screenshots_of_Ubuntu Screenshots_of_GNOME Screenshots_of_KDE_Plasma_5 Screenshots_of_Firefox Screenshots_of_iOS; do
+for c in Screenshots_of_Android_12 Screenshots_of_Android_13 Screenshots_of_Android_14 Windows_10_screenshots Windows_7_screenshots MacOS_screenshots IOS_screenshots Wikipedia_iOS_app_screenshots Commons_iOS_app_screenshots Screenshots_of_Ubuntu_GNOME; do
     list "$c" "$((per / 3))"
 done | fetch screenshots
 

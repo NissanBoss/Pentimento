@@ -104,7 +104,7 @@ func (c *run) copyOf(where string, p image.Image, e embedded) {
 	}
 	var lines []string
 	if r.outside > 0.03 {
-		lines = append(lines, fmt.Sprintf("%s (%dx%d) shows %s more than the picture: what the crop took off.", name, ib.Dx(), ib.Dy(), percent(r.outside, 1)))
+		lines = append(lines, fmt.Sprintf("%s (%dx%d) shows %s more than the picture: what a crop or a zoom took off.", name, ib.Dx(), ib.Dy(), percent(r.outside, 1)))
 	}
 	if len(r.changed) > 0 {
 		big := r.changed[0]

@@ -115,6 +115,16 @@ func (j *jpegFile) inside(data []byte) []embedded {
 		add(e)
 	}
 
+	// A Pixel can list its motion video a little shorter than it is: the
+	// bytes left after the last item were the rest of the video in two of
+	// the calibration's photos. When a video is the last thing listed and
+	// nothing else claims what follows, it runs to the end of the file.
+	if len(out) > 0 && !bytes.HasSuffix(data, []byte("SEFT")) {
+		last := &out[len(out)-1]
+		if last.role == roleVideo && last.at >= j.end && last.at+len(last.data) < len(data) {
+			last.data = data[last.at:]
+		}
+	}
 	// Anything after the end that nothing above explains.
 	covered := make([]bool, len(data)-j.end)
 	for _, e := range out {
