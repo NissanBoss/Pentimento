@@ -1,0 +1,66 @@
+# Real files, published by other people, that the CI downloads and checks
+# on every push (samples.yml). None of them is in this repository. Each
+# line: a name, where it comes from (pinned to a commit, or Wikimedia
+# Commons' own address for the original upload), what Pentimento must
+# find in it and nothing else (- for nothing), and for a cropped file, the
+# picture it was cropped from, to check every byte said to come back.
+#
+# The Snipping Tool's own files, cropped and as they were before, from the
+# repository that published detection for CVE-2023-28303.
+win10-1-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_1_cropped.png	crop-sealed
+win10-1-sanitized.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_1_cropped_sanitized.png	-
+win10-2-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_2_cropped.png	crop-sealed
+win10-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_3_cropped.jpg	jpeg-tail
+win10-3.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_3.jpg	-
+win11-1.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1.png	-
+win11-1-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1_cropped.png	crop-tail	win11-1.png
+win11-1-sanitized.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1_cropped_sanitized.png	-
+win11-2.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_2.png	-
+win11-2-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_2_cropped.png	crop-tail	win11-2.png
+win11-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3_cropped.jpg	jpeg-tail
+win11-3-sanitized.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3_cropped_sanitized.jpg	-
+# The demonstration files of a public recovery tool: a Pixel screenshot,
+# a Windows one, and a GIF. The "original" published beside the Windows
+# one is a different capture: its clock reads another minute, so it is not
+# used to check bytes.
+pixel-case03.png	https://raw.githubusercontent.com/frankthetank-music/Acropalypse-Multi-Tool/ce50609e20d61ef11b927cfa80066d61e7ecfeb2/demo-images/case03.png	crop-tail
+case04.png	https://raw.githubusercontent.com/frankthetank-music/Acropalypse-Multi-Tool/ce50609e20d61ef11b927cfa80066d61e7ecfeb2/demo-images/case04.png	-
+case04-crop.png	https://raw.githubusercontent.com/frankthetank-music/Acropalypse-Multi-Tool/ce50609e20d61ef11b927cfa80066d61e7ecfeb2/demo-images/case04_crop.png	crop-tail
+case01-crop.gif	https://raw.githubusercontent.com/frankthetank-music/Acropalypse-Multi-Tool/ce50609e20d61ef11b927cfa80066d61e7ecfeb2/demo-images/case01_crop.gif	gif-tail
+# Depix's own pixelated text.
+depix-1.png	https://raw.githubusercontent.com/spipm/Depix/850b26862a0d606c9962c7639330bf7fd57cf694/images/testimages/testimage1_pixels.png	mosaic
+depix-2.png	https://raw.githubusercontent.com/spipm/Depix/850b26862a0d606c9962c7639330bf7fd57cf694/images/testimages/testimage2_pixels.png	mosaic
+depix-3.png	https://raw.githubusercontent.com/spipm/Depix/850b26862a0d606c9962c7639330bf7fd57cf694/images/testimages/testimage3_pixels.png	mosaic
+depix-sublime.png	https://raw.githubusercontent.com/spipm/Depix/850b26862a0d606c9962c7639330bf7fd57cf694/images/testimages/sublime_screenshot_pixels_gimp.png	mosaic
+depix-plain.png	https://raw.githubusercontent.com/spipm/Depix/850b26862a0d606c9962c7639330bf7fd57cf694/images/testimages/sublime_screenshot.png	-
+# Excalidraw's fixtures with a scene embedded, nothing deleted in them.
+excalidraw-v2.png	https://raw.githubusercontent.com/excalidraw/excalidraw/4c37956ba5f04ec342a9d9d5891a38f22c5b7b4e/packages/excalidraw/tests/fixtures/smiley_embedded_v2.png	-
+excalidraw-v2.svg	https://raw.githubusercontent.com/excalidraw/excalidraw/4c37956ba5f04ec342a9d9d5891a38f22c5b7b4e/packages/excalidraw/tests/fixtures/smiley_embedded_v2.svg	-
+excalidraw-v1.png	https://raw.githubusercontent.com/excalidraw/excalidraw/4c37956ba5f04ec342a9d9d5891a38f22c5b7b4e/packages/excalidraw/tests/fixtures/test_embedded_v1.png	-
+excalidraw-v1.svg	https://raw.githubusercontent.com/excalidraw/excalidraw/4c37956ba5f04ec342a9d9d5891a38f22c5b7b4e/packages/excalidraw/tests/fixtures/test_embedded_v1.svg	-
+# HDR gain maps, which are the photo's own brightness and not reported.
+apple-gainmap.jpg	https://raw.githubusercontent.com/google/libultrahdr/47d9f00726adba87e3f04059a50a8b34492e057a/tests/data/apple_gainmap_new.jpg	-
+apple-gainmap-old.jpg	https://raw.githubusercontent.com/google/libultrahdr/47d9f00726adba87e3f04059a50a8b34492e057a/tests/data/apple_gainmap_old.jpg	-
+# Office test files from Apache POI and LibreOffice.
+poi-cropped.pptx	https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/slideshow/54542_cropped_bitmap.pptx	office-crop,office-covered
+poi-crop-to-0.pptx	https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/slideshow/crop-to-0.pptx	office-crop
+poi-same-size.xlsx	https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/spreadsheet/picture-and-shape-same-size.xlsx	-
+poi-pictures.docx	https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/document/VariousPictures.docx	-
+lo-artistic.docx	https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/artistic_effects.docx	office-effect
+lo-artistic-2.docx	https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/picture-artistic-effects-preservation.docx	office-effect
+lo-imagecrop.docx	https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/ImageCrop.docx	office-crop
+lo-crop-position.pptx	https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sd/qa/unit/data/pptx/crop-position.pptx	office-crop
+lo-cropped.odt	https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/croppedAndRotated.odt	office-crop
+# iPhone HEIC photos: a gain map and a thumbnail, nothing to report.
+iphone13.heic	https://raw.githubusercontent.com/ianare/exif-samples/5332a9cf0220e9c6c93f88a187daa90808051e10/heic/mobile/iphone_13_pro_max.HEIC	-
+heic-1.heic	https://raw.githubusercontent.com/dsoprea/heic-exif-samples/6bf59bf9c822473817dfb897c45acdcdb53ed9a0/image1.heic	-
+# Phones, from Wikimedia Commons, as their owners uploaded them.
+pixel-portrait-2021.jpg	https://upload.wikimedia.org/wikipedia/commons/a/a8/PXL_20211029_091605461.PORTRAIT.jpg	original-inside,depth
+pixel-portrait-2023.jpg	https://upload.wikimedia.org/wikipedia/commons/8/81/PXL_20230910_035616715.PORTRAIT.jpg	original-inside
+pixel-motion-2025.jpg	https://upload.wikimedia.org/wikipedia/commons/2/29/PXL_20250523_190938024.MP.jpg	motion
+pixel-2022.jpg	https://upload.wikimedia.org/wikipedia/commons/0/0a/PXL_20220306_223230909.jpg	-
+pixel-4a-depth.jpg	https://upload.wikimedia.org/wikipedia/commons/9/90/PXL_20220604_133925124.jpg	depth
+samsung-ballot.jpg	https://upload.wikimedia.org/wikipedia/commons/d/df/2019_General_Election_Ballot_-_Diputados_La_Rioja_Ciudadanos.jpg	preview-differs,phone-trailer
+samsung-live-focus.jpg	https://upload.wikimedia.org/wikipedia/commons/d/d5/2023-03-31-deinboek-daym-buehne-purkersdorf.jpg	original-inside,depth,phone-trailer
+samsung-sign.jpg	https://upload.wikimedia.org/wikipedia/commons/2/22/%22Tauben_bitte_nicht_f%C3%BCttern%22-Schild_20191017.jpg	phone-trailer
+samsung-screenshot.png	https://upload.wikimedia.org/wikipedia/commons/2/2e/Cfait_task_manager_v0.5.2_screenshot_%28Android%29.png	phone-trailer

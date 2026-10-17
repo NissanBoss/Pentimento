@@ -1,0 +1,51 @@
+name: Real files
+
+# The files other people's phones, editors and test suites wrote, listed
+# in testdata/samples.tsv, and files made here with the tools people use,
+# by testdata/tools.sh. None of them is in the repository; they are
+# downloaded or made on every run.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Download the samples
+        run: sh testdata/fetch.sh "$RUNNER_TEMP/samples"
+
+      - name: Check every one of them
+        run: PENTIMENTO_SAMPLES="$RUNNER_TEMP/samples" go test -run TestSamples -v .
+
+  tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install the tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick libjpeg-turbo-progs libimage-exiftool-perl python3-pil fonts-dejavu-core
+
+      - name: Make the files
+        run: sh testdata/tools.sh "$RUNNER_TEMP/tools"
+
+      - name: Check them
+        run: PENTIMENTO_TOOLS="$RUNNER_TEMP/tools" go test -run TestMadeByTools -v .

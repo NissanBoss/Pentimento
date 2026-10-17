@@ -1,0 +1,82 @@
+name: Release
+
+# Tagging a version (git tag v1) builds the five packages and puts them on
+# the Releases page.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      # build.sh is the same script used to build by hand, called rather
+      # than copied. It already checks formatting, runs vet and runs the
+      # tests before compiling anything, so none of that is repeated here.
+      # GITHUB_REF_NAME is the tag, and it is what "pentimento --version"
+      # ends up printing.
+      - name: Build the packages
+        run: |
+          sh build.sh
+          ls -lh dist/*.zip dist/*.tar.gz
+
+      # The release text comes from CHANGELOG.md, from the section whose
+      # heading matches this tag exactly. No section, no notes: better than
+      # the same generic paragraph on every version.
+      - name: Prepare the release notes
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            awk -v wanted="## $GITHUB_REF_NAME" '
+              $0 == wanted { inside = 1; next }
+              /^## / { inside = 0 }
+              inside { print }
+            ' CHANGELOG.md > notes.md
+          fi
+          touch notes.md
+          cat >> notes.md <<'END'
+
+          ## Download
+
+          Take the package for your system, unpack it, and run the binary.
+          There is nothing to install.
+
+          | System | Package |
+          |---|---|
+          | Windows | `pentimento-windows.zip` |
+          | Linux | `pentimento-linux.tar.gz` |
+          | Linux on ARM | `pentimento-linux-arm.tar.gz` |
+          | Mac with Apple silicon | `pentimento-mac-apple.tar.gz` |
+          | Mac with Intel | `pentimento-mac-intel.tar.gz` |
+
+          Give it the screenshots, photos, documents and diagrams you are
+          about to send or publish. It says which of them still hold what
+          you cropped, covered or blurred out of them, and how much of it.
+
+          It only reads. Nothing is written, nothing is taken out of the
+          files to show you, and nothing is sent anywhere.
+          END
+          echo "--- notes ---"
+          cat notes.md
+
+      - name: Publish
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/pentimento-windows.zip
+            dist/pentimento-linux.tar.gz
+            dist/pentimento-linux-arm.tar.gz
+            dist/pentimento-mac-apple.tar.gz
+            dist/pentimento-mac-intel.tar.gz
+          body_path: notes.md

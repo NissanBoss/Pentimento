@@ -1,0 +1,34 @@
+name: Calibration
+
+# Hundreds of photos from Pixels, Samsungs and iPhones and screenshots of
+# five systems, from Wikimedia Commons as their owners uploaded them, and
+# the camera files of exif-samples, counted for what each kind of finding
+# turns up. The README's numbers come from here, and so does every rule
+# that was changed because it fired on ordinary files. Only counts are
+# printed. Once a week, and by hand.
+
+on:
+  schedule:
+    - cron: "41 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      per:
+        description: "files per category"
+        default: "150"
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Download the calibration set
+        run: sh testdata/calibrate.sh "$RUNNER_TEMP/cal" "${{ github.event.inputs.per || '150' }}"
+
+      - name: Count
+        run: PENTIMENTO_CALIBRATION="$RUNNER_TEMP/cal" go test -run TestCalibration -v -timeout 100m .
