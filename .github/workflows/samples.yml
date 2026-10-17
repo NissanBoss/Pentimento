@@ -50,6 +50,13 @@ jobs:
       - name: Count what is found
         run: PENTIMENTO_BENCH="$RUNNER_TEMP/bench" go test -run TestBench -v .
 
+      - name: Keep the bench
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench
+          path: ${{ runner.temp }}/bench
+
   tools:
     runs-on: ubuntu-latest
     timeout-minutes: 15
