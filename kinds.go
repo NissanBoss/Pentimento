@@ -47,9 +47,9 @@ var kindsOfHit = map[string]hitKind{
 		one:  "The end of an earlier version of this picture is behind the end of the file",
 		many: "%d files carry the end of an earlier version of themselves behind their end",
 		advice: "A JPEG ends at its end marker and viewers stop there. What follows is the tail of a bigger JPEG " +
-			"that was in the file before, the same mistake as the cropped screenshots of CVE-2023-28303. A JPEG is " +
-			"harder to decode from the middle than a PNG, and this does not try; the bytes are still the old " +
-			"picture's, and nothing about them is gone. Save a new file instead of over the old one.",
+			"that was in the file before, the same mistake as the cropped screenshots of CVE-2023-28303. The new picture was made by the same " +
+			"encoder as the old one, with the same tables, and those decode the old one's last rows. Save a new file " +
+			"instead of over the old one.",
 	},
 	"gif-tail": {
 		tag: "KEPT    ", weight: Kept,

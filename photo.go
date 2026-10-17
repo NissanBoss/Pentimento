@@ -58,7 +58,7 @@ func (c *run) jpeg(where string, data []byte) {
 			phone = append(phone, e)
 		case roleOther:
 			if e.what == "the end of an earlier JPEG" {
-				c.hit("jpeg-tail", where, fmt.Sprintf("%s of an earlier JPEG's compressed picture and its end marker, after the end of this one.", size(int64(len(e.data)))))
+				c.jpegTail(where, data, j, e)
 			} else if !strings.HasPrefix(e.from, "Samsung") {
 				c.hit("tail-other", where, fmt.Sprintf("%s after the end: %s.", size(int64(len(e.data))), e.what))
 			}
@@ -189,4 +189,22 @@ func (c *run) phoneTrailer(where string, entries []embedded) {
 	if len(lines) > 0 {
 		c.hit("phone-trailer", where, lines[0], lines[1:]...)
 	}
+}
+
+// jpegTail says what is left of an earlier JPEG behind this one, decoded
+// with this one's tables when they are the same encoder's.
+func (c *run) jpegTail(where string, data []byte, j *jpegFile, e embedded) {
+	o, ok := decodeTail(data[:j.end], e.data, j.width)
+	if !ok || o.perRow == 0 {
+		c.hit("jpeg-tail", where, fmt.Sprintf("%s of an earlier JPEG's compressed picture and its end marker, after the end of this one.", size(int64(len(e.data)))),
+			"Its blocks do not decode with this picture's tables, so how much of it is there was not worked out.")
+		return
+	}
+	line := fmt.Sprintf("The bottom %s rows of an earlier picture about %s pixels wide, behind this one of %dx%d.",
+		commas(o.rowPixels), commas(o.width), j.width, j.height)
+	more := "They decode with this picture's own tables, exact but for their overall brightness and tint, which went with the part the new picture overwrote."
+	if !o.sure {
+		more += " Other widths fit the rows almost as well, so the width is the likeliest one, not a certain one."
+	}
+	c.hit("jpeg-tail", where, line, more)
 }

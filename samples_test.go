@@ -70,7 +70,9 @@ func TestSamples(t *testing.T) {
 				t.Errorf("could not read all of it: %v", c.gaps)
 			}
 			c.only(t, x.expect...)
-			if x.original != "" {
+			if x.original != "" && strings.HasSuffix(x.name, ".jpg") {
+				sameBlocks(t, data, filepath.Join(dir, x.original))
+			} else if x.original != "" {
 				exactBytes(t, data, filepath.Join(dir, x.original))
 			}
 		})
@@ -157,4 +159,33 @@ func TestMadeByTools(t *testing.T) {
 			c.only(t, want...)
 		})
 	}
+}
+
+// sameBlocks checks the end of an earlier JPEG decoded from behind a crop
+// against the JPEG as it was before: the average of every MCU must follow
+// the original's, as it does when every block came back but for the one
+// amount of brightness that went with the overwritten part.
+func sameBlocks(t *testing.T, cropped []byte, originalPath string) {
+	t.Helper()
+	j := readJPEG(cropped)
+	o, ok := decodeTail(cropped[:j.end], tailOfOld(cropped, j.end), j.width)
+	if !ok || o.perRow == 0 {
+		t.Fatal("the tail did not decode")
+	}
+	raw, err := os.ReadFile(originalPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := decodePicture(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := tailMatch(o, img)
+	if want := (img.Bounds().Dx() + 15) / 16; o.perRow != want {
+		t.Errorf("%d MCUs across, and the original has %d", o.perRow, want)
+	}
+	if r < 0.99 {
+		t.Errorf("the decoded tail follows the original at %.4f", r)
+	}
+	t.Logf("%d MCUs decoded, following the original at %.4f", o.mcus, r)
 }

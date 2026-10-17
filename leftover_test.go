@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"image"
+	"math"
 	"math/rand"
 	"testing"
 )
@@ -137,4 +138,54 @@ func TestTheEndOfAnEarlierGIF(t *testing.T) {
 	tail := append(bytes.Repeat([]byte{0x41, 0x7f, 0x13}, 40), 0x00, 0x3b)
 	check(t, "anim.gif", append(append([]byte{}, gif...), tail...)).only(t, "gif-tail")
 	check(t, "anim.gif", gif).only(t)
+}
+
+// tailMatch is how closely the MCU averages of a decoded tail follow the
+// bottom of the original picture, as a correlation, leaving out the first
+// row, where the decoding was still finding its step.
+func tailMatch(o *oldJPEG, img image.Image) float64 {
+	b := img.Bounds()
+	per := (b.Dx() + 15) / 16
+	lum := lumaOf(img)
+	var means []float64
+	for my := 0; my < (b.Dy()+15)/16; my++ {
+		for mx := 0; mx < per; mx++ {
+			var s, n float64
+			for y := my * 16; y < min(my*16+16, b.Dy()); y++ {
+				for x := mx * 16; x < min(mx*16+16, b.Dx()); x++ {
+					s += lum(b.Min.X+x, b.Min.Y+y)
+					n++
+				}
+			}
+			means = append(means, s/n)
+		}
+	}
+	off := len(means) - len(o.luma)
+	var sa, sb, saa, sbb, sab, n float64
+	for i, v := range o.luma {
+		if i < per || off+i < 0 {
+			continue
+		}
+		a, c := float64(v), means[off+i]
+		sa, sb, saa, sbb, sab, n = sa+a, sb+c, saa+a*a, sbb+c*c, sab+a*c, n+1
+	}
+	return (sab - sa*sb/n) / math.Sqrt((saa-sa*sa/n)*(sbb-sb*sb/n))
+}
+
+// The end of a JPEG decoded from behind a crop, with Go's own encoder on
+// both sides, as the Snipping Tool's was the same encoder on both sides.
+func TestDecodingTheEndOfAnEarlierJPEG(t *testing.T) {
+	old := photo(900, 700, 15)
+	older := encodeJPEG(t, old, 90)
+	newer := encodeJPEG(t, cropped(old, image.Rect(100, 100, 400, 300)), 90)
+	data := overwritten(newer, older)
+	j := readJPEG(data)
+	o, ok := decodeTail(data[:j.end], tailOfOld(data, j.end), j.width)
+	if !ok || o.perRow != 57 {
+		t.Fatalf("decoded %v, %d MCUs across, and the old picture has 57", ok, o.perRow)
+	}
+	oldImg, _ := decodePicture(older)
+	if r := tailMatch(o, oldImg); r < 0.99 {
+		t.Errorf("the decoded tail follows the original at %.4f", r)
+	}
 }

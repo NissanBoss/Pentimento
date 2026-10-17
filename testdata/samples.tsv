@@ -10,14 +10,15 @@
 win10-1-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_1_cropped.png	crop-sealed
 win10-1-sanitized.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_1_cropped_sanitized.png	-
 win10-2-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_2_cropped.png	crop-sealed
-win10-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_3_cropped.jpg	jpeg-tail
+win10-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_3_cropped.jpg	jpeg-tail	win10-3.jpg
 win10-3.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows10_snipping_tool_3.jpg	-
 win11-1.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1.png	-
 win11-1-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1_cropped.png	crop-tail	win11-1.png
 win11-1-sanitized.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_1_cropped_sanitized.png	-
 win11-2.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_2.png	-
 win11-2-cropped.png	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_2_cropped.png	crop-tail	win11-2.png
-win11-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3_cropped.jpg	jpeg-tail
+win11-3.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3.jpg	-
+win11-3-cropped.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3_cropped.jpg	jpeg-tail	win11-3.jpg
 win11-3-sanitized.jpg	https://raw.githubusercontent.com/infobyte/CVE-2023-21036/b9158c048dfac13b790b4bd88bb23d8587ea177f/test_imgs/windows11_3_cropped_sanitized.jpg	-
 # The demonstration files of a public recovery tool: a Pixel screenshot,
 # a Windows one, and a GIF. The "original" published beside the Windows
