@@ -101,7 +101,7 @@ for f in 54542_cropped_bitmap croppedAndRotated ImageCrop; do
 done
 ls -la
 
-# A Writer document with a filled box drawn over a picture, anchored in
+# A Writer document with a filled box drawn in front of a picture, anchored in
 # the picture's paragraph, and the same document saved as Word by
 # LibreOffice.
 python3 - <<'PY'
@@ -117,7 +117,7 @@ ns = ('xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
       'xmlns:xlink="http://www.w3.org/1999/xlink"')
 content = ('<?xml version="1.0" encoding="UTF-8"?><office:document-content ' + ns + ' office:version="1.3">'
     '<office:automatic-styles><style:style style:name="gr1" style:family="graphic">'
-    '<style:graphic-properties draw:fill="solid" draw:fill-color="#000000"/></style:style></office:automatic-styles>'
+    '<style:graphic-properties draw:fill="solid" draw:fill-color="#000000" style:wrap="run-through" style:run-through="foreground"/></style:style></office:automatic-styles>'
     '<office:body><office:text><text:p>'
     '<draw:frame draw:name="Picture" text:anchor-type="paragraph" svg:x="0cm" svg:y="0cm" svg:width="12cm" svg:height="9cm" draw:z-index="0">'
     '<draw:image xlink:href="Pictures/a.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame>'
