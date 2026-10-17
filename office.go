@@ -104,6 +104,13 @@ func (c *run) office(where string, data []byte, depth int) {
 		body := o.read(part)
 		rels := o.rels(part)
 		place := partName(part)
+		if strings.HasPrefix(part, "word/") {
+			for _, group := range wordCovers(body) {
+				for _, cv := range covered(group) {
+					c.hit("office-covered", where, coverLine(cv.share, rels[cv.target]))
+				}
+			}
+		}
 		for _, p := range drawingPictures(body) {
 			target := rels[p.embed]
 			if target == "" {
@@ -398,7 +405,7 @@ func effectName(local string) string {
 // openDocument reads the LibreOffice formats, where a crop is a clip in
 // the frame's graphic style.
 func (c *run) openDocument(where string, o *officeFile, depth int) {
-	clipped := map[string]bool{}
+	clipped, noFill := map[string]bool{}, map[string]bool{}
 	for _, part := range []string{"styles.xml", "content.xml"} {
 		d := xml.NewDecoder(bytes.NewReader(o.read(part)))
 		style := ""
@@ -415,8 +422,16 @@ func (c *run) openDocument(where string, o *officeFile, depth int) {
 					if clip := attr(e, "clip"); clip != "" && clipCuts(clip) {
 						clipped[style] = true
 					}
+					if attr(e, "fill") == "none" {
+						noFill[style] = true
+					}
 				}
 			}
+		}
+	}
+	for _, group := range writerCovers(o.read("content.xml"), noFill) {
+		for _, cv := range covered(group) {
+			c.hit("office-covered", where, coverLine(cv.share, cv.target))
 		}
 	}
 	d := xml.NewDecoder(bytes.NewReader(o.read("content.xml")))

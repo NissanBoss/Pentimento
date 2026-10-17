@@ -91,3 +91,53 @@ func TestLibreOfficeCrop(t *testing.T) {
 		t.Errorf("%d crops found, and one of the two frames is cropped", n)
 	}
 }
+
+// A Word document with a picture in a paragraph and a box floating over
+// it, anchored to the same paragraph, as Word anchors a box drawn there.
+func wordDoc(t *testing.T, behind bool, fill string) []byte {
+	behindDoc := "0"
+	if behind {
+		behindDoc = "1"
+	}
+	doc := `<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><w:body><w:p>` +
+		`<w:r><w:drawing><wp:inline><wp:extent cx="4000000" cy="3000000"/><a:graphic><a:graphicData><pic:pic><pic:blipFill><a:blip r:embed="rId2"/></pic:blipFill></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>` +
+		`<w:r><mc:AlternateContent><mc:Choice Requires="wps"><w:drawing><wp:anchor relativeHeight="251659264" behindDoc="` + behindDoc + `"><wp:positionH relativeFrom="column"><wp:posOffset>1000000</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>1200000</wp:posOffset></wp:positionV><wp:extent cx="1500000" cy="400000"/><a:graphic><a:graphicData><wps:wsp><wps:spPr>` + fill + `<a:ln><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:ln></wps:spPr></wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice><mc:Fallback><w:pict/></mc:Fallback></mc:AlternateContent></w:r>` +
+		`</w:p></w:body></w:document>`
+	return officeZip(t, map[string]string{
+		"word/document.xml":            doc,
+		"word/_rels/document.xml.rels": `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="image" Target="media/image1.png"/></Relationships>`,
+		"word/media/image1.png":        string(encodePNG(t, photo(200, 150, 70))),
+	})
+}
+
+func TestABoxOverAPictureInWord(t *testing.T) {
+	solid := `<a:solidFill><a:srgbClr val="000000"/></a:solidFill>`
+	c := check(t, "letter.docx", wordDoc(t, false, solid))
+	c.only(t, "office-covered")
+	if line := c.hits["office-covered"][0].what; !strings.Contains(line, "image1.png") || !strings.Contains(line, "5%") {
+		t.Errorf("described as %q", line)
+	}
+	check(t, "letter.docx", wordDoc(t, true, solid)).only(t)
+	check(t, "letter.docx", wordDoc(t, false, `<a:noFill/>`)).only(t)
+}
+
+func TestABoxOverAPictureInWriter(t *testing.T) {
+	content := `<?xml version="1.0"?><office:document-content xmlns:office="o" xmlns:style="s" xmlns:draw="d" xmlns:svg="v" xmlns:text="t" xmlns:xlink="x"><office:automatic-styles>` +
+		`<style:style style:name="gr1"><style:graphic-properties draw:fill="solid"/></style:style>` +
+		`<style:style style:name="gr2"><style:graphic-properties draw:fill="none"/></style:style>` +
+		`</office:automatic-styles><office:body><office:text><text:p>` +
+		`<draw:frame text:anchor-type="paragraph" svg:x="0cm" svg:y="0cm" svg:width="10cm" svg:height="7cm" draw:z-index="0"><draw:image xlink:href="Pictures/a.png"/></draw:frame>` +
+		`<draw:rect draw:style-name="gr1" text:anchor-type="paragraph" svg:x="2cm" svg:y="3cm" svg:width="4cm" svg:height="1cm" draw:z-index="1"/>` +
+		`<draw:rect draw:style-name="gr2" text:anchor-type="paragraph" svg:x="0cm" svg:y="0cm" svg:width="10cm" svg:height="7cm" draw:z-index="2"/>` +
+		`</text:p></office:text></office:body></office:document-content>`
+	odt := officeZip(t, map[string]string{
+		"content.xml":    content,
+		"styles.xml":     `<?xml version="1.0"?><office:document-styles xmlns:office="o"/>`,
+		"Pictures/a.png": string(encodePNG(t, photo(100, 80, 71))),
+	})
+	c := check(t, "notes.odt", odt)
+	c.only(t, "office-covered")
+	if n := len(c.hits["office-covered"]); n != 1 {
+		t.Errorf("%d covers, and only the filled box is one", n)
+	}
+}

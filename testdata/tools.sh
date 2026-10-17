@@ -100,3 +100,42 @@ for f in 54542_cropped_bitmap croppedAndRotated ImageCrop; do
     rm -f "$f.pptx" "$f.odt" "$f.docx"
 done
 ls -la
+
+# A Writer document with a filled box drawn over a picture, anchored in
+# the picture's paragraph, and the same document saved as Word by
+# LibreOffice.
+python3 - <<'PY'
+import zipfile
+from PIL import Image
+Image.open("crop-tail__pillow-overwrite.png").convert("RGB").resize((400, 300)).save("a.png")
+ns = ('xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+      'xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" '
+      'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" '
+      'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" '
+      'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" '
+      'xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" '
+      'xmlns:xlink="http://www.w3.org/1999/xlink"')
+content = ('<?xml version="1.0" encoding="UTF-8"?><office:document-content ' + ns + ' office:version="1.3">'
+    '<office:automatic-styles><style:style style:name="gr1" style:family="graphic">'
+    '<style:graphic-properties draw:fill="solid" draw:fill-color="#000000"/></style:style></office:automatic-styles>'
+    '<office:body><office:text><text:p>'
+    '<draw:frame draw:name="Picture" text:anchor-type="paragraph" svg:x="0cm" svg:y="0cm" svg:width="12cm" svg:height="9cm" draw:z-index="0">'
+    '<draw:image xlink:href="Pictures/a.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame>'
+    '<draw:rect draw:style-name="gr1" text:anchor-type="paragraph" svg:x="2cm" svg:y="3cm" svg:width="6cm" svg:height="1.5cm" draw:z-index="1"/>'
+    '</text:p></office:text></office:body></office:document-content>')
+manifest = ('<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3">'
+    '<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/>'
+    '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>'
+    '<manifest:file-entry manifest:full-path="Pictures/a.png" manifest:media-type="image/png"/></manifest:manifest>')
+with zipfile.ZipFile("office-covered__writer-box.odt", "w") as z:
+    z.writestr(zipfile.ZipInfo("mimetype"), "application/vnd.oasis.opendocument.text")
+    z.writestr("META-INF/manifest.xml", manifest)
+    z.writestr("content.xml", content)
+    z.write("a.png", "Pictures/a.png")
+PY
+rm -f a.png
+cp office-covered__writer-box.odt boxed.odt
+soffice --headless --convert-to docx boxed.odt >/dev/null 2>&1 || true
+[ -s boxed.docx ] && mv boxed.docx office-covered__libreoffice-word-box.docx
+rm -f boxed.odt
+ls -la
