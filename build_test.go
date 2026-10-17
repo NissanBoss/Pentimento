@@ -146,8 +146,8 @@ func segment(marker byte, body []byte) []byte {
 }
 
 // exifWithThumbnail is an APP1 EXIF segment whose IFD1 holds a thumbnail,
-// and, given a size, an EXIF IFD saying the camera made the picture that
-// size.
+// and, given a size, a camera's make and an EXIF IFD saying the camera
+// made the picture that size.
 func exifWithThumbnail(thumb []byte, made ...image.Point) []byte {
 	var t bytes.Buffer
 	le := binary.LittleEndian
@@ -157,7 +157,7 @@ func exifWithThumbnail(thumb []byte, made ...image.Point) []byte {
 		binary.Write(&t, le, uint32(1))
 		binary.Write(&t, le, v)
 	}
-	n0 := uint16(len(made))
+	n0 := 2 * uint16(len(made))
 	ifd1 := 8 + 2 + 12*uint32(n0) + 4
 	sub := ifd1 + 30
 	pic := sub
@@ -169,6 +169,10 @@ func exifWithThumbnail(thumb []byte, made ...image.Point) []byte {
 	// IFD0, pointing at the EXIF IFD if there is one, and at IFD1
 	binary.Write(&t, le, n0)
 	if n0 > 0 {
+		binary.Write(&t, le, uint16(0x010f))
+		binary.Write(&t, le, uint16(2))
+		binary.Write(&t, le, uint32(4))
+		t.WriteString("Cam\x00")
 		entry(0x8769, 4, sub)
 	}
 	binary.Write(&t, le, ifd1)

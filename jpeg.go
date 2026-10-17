@@ -201,6 +201,17 @@ func (j *jpegFile) madeAs() (image.Point, bool) {
 	return image.Pt(int(w), int(h)), true
 }
 
+// savedLater says whether the EXIF says the picture was saved at another
+// time than it was taken, which an editor most often writes.
+func (j *jpegFile) savedLater() bool {
+	t, err := parseTIFF(j.exif)
+	if err != nil {
+		return false
+	}
+	taken, saved := t.sub(t.ifd0, 0x8769).text(0x9003), t.ifd0.text(0x0132)
+	return taken != "" && saved != "" && taken != saved
+}
+
 // fromCamera says whether the EXIF names a make or a model, which a
 // camera or a phone writes and a screenshot tool does not.
 func (j *jpegFile) fromCamera() bool {

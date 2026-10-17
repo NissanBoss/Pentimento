@@ -132,12 +132,23 @@ func (c *run) copyOf(where string, p image.Image, e embedded, cut string) {
 	}
 }
 
-// cutFrom says so when the picture is smaller than the EXIF says the
-// camera made it, either way round.
+// cutFrom says what the EXIF says about the picture having been cut
+// down: that it is smaller than the camera made it, or that it is the size
+// the camera made it and was saved when it was taken. In the calibration
+// the second was series of Pixel photos at their cameras' own sizes, each
+// with a thumbnail showing the same eleven or twenty two per cent more,
+// which is the phone's doing and not an editor's; the thumbnail still has
+// what the photo leaves out.
 func cutFrom(j *jpegFile, p image.Image) string {
 	made, ok := j.madeAs()
 	is := p.Bounds().Size()
-	if !ok || made == is || made == image.Pt(is.Y, is.X) {
+	if !ok {
+		return ""
+	}
+	if made == is || made == image.Pt(is.Y, is.X) {
+		if j.fromCamera() && !j.savedLater() {
+			return "It is the size its EXIF says the camera made it, saved when it was taken, so the phone most likely did this itself, as a digital zoom does; the thumbnail has what the zoom left out."
+		}
 		return ""
 	}
 	if is.X*is.Y >= made.X*made.Y {

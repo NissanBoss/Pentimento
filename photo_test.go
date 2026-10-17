@@ -27,6 +27,12 @@ func TestAThumbnailFromBeforeTheCrop(t *testing.T) {
 	if more := c.hits["preview-differs"][0].more; len(more) == 0 || !strings.Contains(more[0], "made it 1200x900, and it is 700x600") {
 		t.Errorf("the EXIF size was not said: %v", c.hits["preview-differs"])
 	}
+	// At the size the camera made it, which is what a phone's digital zoom
+	// leaves.
+	c = check(t, "zoomed.jpg", withSegments(main, exifWithThumbnail(thumb, image.Pt(700, 600))))
+	if more := c.hits["preview-differs"][0].more; len(more) == 0 || !strings.Contains(more[0], "digital zoom") {
+		t.Errorf("the zoom was not said: %v", c.hits["preview-differs"])
+	}
 }
 
 // A black box drawn over a name on a photo of a letter, and the thumbnail
