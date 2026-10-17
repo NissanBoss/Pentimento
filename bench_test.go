@@ -2,8 +2,9 @@ package main
 
 // The bench made by testdata/bench.sh: how often a box that lets things
 // through, and a mosaic, are found, by opacity, colour, block size, page
-// and format. It fails only on a clean page with anything found on it;
-// the rates are for reading, and for the README.
+// and format. It fails on a clean page with anything found on it, and
+// when fewer are found than the floors below, which are a little under
+// what v1.1 found, so a change that loses some has to say so here.
 
 import (
 	"fmt"
@@ -13,6 +14,13 @@ import (
 	"strings"
 	"testing"
 )
+
+var benchFloors = map[string]int{
+	"box png all":    55,
+	"box jpg all":    28,
+	"mosaic png all": 28,
+	"mosaic jpg all": 18,
+}
 
 func TestBench(t *testing.T) {
 	dir := os.Getenv("PENTIMENTO_BENCH")
@@ -50,12 +58,14 @@ func TestBench(t *testing.T) {
 		case "box":
 			hit := c.has("shows-through")
 			colour, op, look := parts[0], parts[1], parts[2]
+			count("box "+format+" all", hit)
 			count("box "+format+" opacity "+op, hit)
 			count("box "+format+" "+colour, hit)
 			count("box "+format+" page "+look, hit)
 		case "mosaic":
 			hit := c.has("mosaic")
 			block, look := parts[0], parts[1]
+			count("mosaic "+format+" all", hit)
 			count(fmt.Sprintf("mosaic %s block %02s", format, block), hit)
 			count("mosaic "+format+" page "+look, hit)
 		}

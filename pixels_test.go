@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"strings"
 	"testing"
 )
@@ -91,6 +92,46 @@ func TestABoxThatLetsTheTextThrough(t *testing.T) {
 		}
 	}
 	check(t, "frame.png", encodePNG(t, framed)).only(t)
+}
+
+// darkMode is a page the other way round, light text on dark grey.
+func darkMode(img *image.NRGBA) *image.NRGBA {
+	out := cropped(img, img.Bounds())
+	for i := 0; i < len(out.Pix); i += 4 {
+		for k := 0; k < 3; k++ {
+			out.Pix[i+k] = uint8(30 + (255-int(out.Pix[i+k]))*182/225)
+		}
+	}
+	return out
+}
+
+// A box close to the colour of the page has an edge too faint to end
+// a region at, and is found by its edges instead: black at ninety per
+// cent on a page in dark mode, white at ninety on a light one. Its edges
+// run between the lines, as a box over a line of text does.
+func TestABoxNearlyTheColourOfThePage(t *testing.T) {
+	box := image.Rect(3, 46, 597, 74)
+	dark := darkMode(page(600, 300, 44))
+	check(t, "dark.png", encodePNG(t, boxed(dark, box, color.NRGBA{0, 0, 0, 255}, 0.9))).only(t, "shows-through")
+	light := page(600, 300, 45)
+	check(t, "light.png", encodePNG(t, boxed(light, box, color.NRGBA{255, 255, 255, 255}, 0.9))).only(t, "shows-through")
+	// In a JPEG the same white box is nine levels off the page, in noise of
+	// about that much near the text above it, and is not found; a yellow
+	// one, twenty levels off, is.
+	check(t, "light.jpg", encodeJPEG(t, boxed(light, box, color.NRGBA{255, 235, 59, 255}, 0.9), 90)).only(t, "shows-through")
+	// Solid, they keep nothing.
+	check(t, "dark.png", encodePNG(t, boxed(dark, box, color.NRGBA{0, 0, 0, 255}, 1))).only(t)
+	// A panel a few levels off the page with nothing in it is a sidebar.
+	check(t, "panel.png", encodePNG(t, boxed(page(600, 300, 46), image.Rect(400, 0, 600, 300), color.NRGBA{235, 235, 230, 255}, 1))).only(t)
+}
+
+// A JPEG of grey text on grey is a grey JPEG, which decodes the way a
+// grey PNG does, and is still a JPEG.
+func TestAMosaicInAGreyJPEG(t *testing.T) {
+	shot := pixelated(darkMode(page(600, 300, 47)), image.Rect(80, 64, 400, 128), 10)
+	grey := image.NewGray(shot.Bounds())
+	draw.Draw(grey, grey.Bounds(), shot, image.Point{}, draw.Src)
+	check(t, "grey.jpg", encodeJPEG(t, grey, 90)).only(t, "mosaic")
 }
 
 // A HEIC portrait: the photo, its depth map and a matte of the people in

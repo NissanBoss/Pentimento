@@ -72,7 +72,7 @@ func (c *run) jpeg(where string, data []byte) {
 	}
 	c.phoneTrailer(where, phone)
 	if p := pic(); p != nil {
-		c.pixelsOf(where, p, j.fromCamera())
+		c.pixelsOf(where, p, false, j.fromCamera())
 	}
 }
 

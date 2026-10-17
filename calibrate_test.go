@@ -5,8 +5,10 @@ package main
 // numbers in the README come from, and where a rule that fires on
 // ordinary files shows up as a count that should be near nothing: a
 // mosaic in a sky, a box in a toolbar, a thumbnail that differs because a
-// phone tone-maps its thumbnails on their own. Only the counts are ever
-// printed; the files are other people's.
+// phone tone-maps its thumbnails on their own. Each photo is also looked
+// at as if its EXIF were gone, which is how it arrives after a chat app
+// has had it, and those counts are the "stripped" ones. Only the counts
+// are ever printed; the files are other people's.
 
 import (
 	"fmt"
@@ -43,6 +45,18 @@ func TestCalibration(t *testing.T) {
 			read++
 			if len(c.gaps) > 0 {
 				gaps++
+			}
+			if g != "screenshots" && len(data) > 2 && data[0] == 0xFF && data[1] == 0xD8 {
+				if img, err := decodePicture(data); err == nil {
+					bare := newRun(shower{})
+					bare.pixelsOf(filepath.Base(f), img, false, false)
+					for k, hits := range bare.hits {
+						counts["stripped "+k]++
+						for _, h := range hits {
+							loud = append(loud, fmt.Sprintf("%s/%s: stripped %s: %s", g, filepath.Base(f), k, h.what))
+						}
+					}
+				}
 			}
 			for k, hits := range c.hits {
 				counts[k]++
