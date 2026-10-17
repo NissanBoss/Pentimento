@@ -49,6 +49,16 @@ func compareCopies(main, copied image.Image) comparison {
 	cs := greyOf(copied, searchSide)
 	ms := greyOf(main, searchSide*2)
 	place, score := findInside(ms, cs)
+	// A page of text shrunk to sixty four pixels is grey mush, and a strip
+	// cropped out of it was not found in its own thumbnail: jpegtran's crop
+	// of a letter, which keeps the thumbnail. A poor fit is looked for
+	// again on a finer grid, in finer steps of size.
+	if score < 0.85 {
+		cs2, ms2 := greyOf(copied, 96), greyOf(main, 192)
+		if p, s := findInsideBy(ms2, cs2, 0.0125); s > score {
+			place, score, cs = p, s, cs2
+		}
+	}
 	if score < 0.6 {
 		// Turned a quarter, half or three quarters, at the same size.
 		t := ms
@@ -87,11 +97,20 @@ func compareCopies(main, copied image.Image) comparison {
 	// which is the one thing the box must not do to the result.
 	plain := ncc(M.resized(fine.w, fine.h), C, fine)
 	score = trimmedNCC(M.resized(fine.w, fine.h), C, fine)
-	if score < 0.5 {
+	// Text shrunk to a thumbnail matches itself badly: a strip cropped
+	// from a letter scored 0.56 in the right place. So the line for "not
+	// this picture" is low, and a crop found with a poor match is believed
+	// only when the shape changed, which is what a crop does and a
+	// misplaced match of the same frame does not.
+	if score < 0.35 {
 		return comparison{unrelated: true, score: score}
 	}
 	r := comparison{score: score}
 	r.outside = outsideShare(C, fine)
+	sameShape := math.Abs(float64(M.w)/float64(M.h)-float64(C.w)/float64(C.h)) < 0.03*float64(C.w)/float64(C.h)
+	if score < 0.8 && sameShape {
+		r.outside = 0
+	}
 	var shifted int
 	r.changed, r.share, shifted = changedParts(M, C, fine, mb)
 	if lensMoved(r.changed, mb) {
@@ -119,6 +138,10 @@ func (p placement) full(g grid) bool {
 // findInside looks for the picture m inside the copy c, at every size from
 // as big as fits down to a third of that, and every place.
 func findInside(m, c grid) (placement, float64) {
+	return findInsideBy(m, c, 0.025)
+}
+
+func findInsideBy(m, c grid, step float64) (placement, float64) {
 	aspect := float64(m.w) / float64(m.h)
 	fitW, fitH := float64(c.w), float64(c.w)/aspect
 	if fitH > float64(c.h) {
@@ -135,7 +158,7 @@ func findInside(m, c grid) (placement, float64) {
 			best, bestScore = p, s
 		}
 	}
-	for s := 1.0; s >= 0.33; s -= 0.025 {
+	for s := 1.0; s >= 0.33; s -= step {
 		w, h := int(math.Round(fitW*s)), int(math.Round(fitH*s))
 		if w < 6 || h < 6 {
 			break

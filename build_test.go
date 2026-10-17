@@ -95,12 +95,24 @@ func cropped(img *image.NRGBA, r image.Rectangle) *image.NRGBA {
 	return out
 }
 
+// shrunk averages the pixels that fall in each new one, the way a camera
+// or ImageMagick makes a thumbnail. Picking one pixel in each instead made
+// thumbnails of text that no real thumbnail looks like.
 func shrunk(img image.Image, w, h int) *image.NRGBA {
 	b := img.Bounds()
 	out := image.NewNRGBA(image.Rect(0, 0, w, h))
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			out.Set(x, y, img.At(b.Min.X+x*b.Dx()/w, b.Min.Y+y*b.Dy()/h))
+			x0, x1 := b.Min.X+x*b.Dx()/w, b.Min.X+(x+1)*b.Dx()/w
+			y0, y1 := b.Min.Y+y*b.Dy()/h, b.Min.Y+(y+1)*b.Dy()/h
+			var sr, sg, sb, n uint32
+			for yy := y0; yy < max(y1, y0+1); yy++ {
+				for xx := x0; xx < max(x1, x0+1); xx++ {
+					r, g, bl, _ := img.At(xx, yy).RGBA()
+					sr, sg, sb, n = sr+r>>8, sg+g>>8, sb+bl>>8, n+1
+				}
+			}
+			out.SetNRGBA(x, y, color.NRGBA{uint8(sr / n), uint8(sg / n), uint8(sb / n), 255})
 		}
 	}
 	return out

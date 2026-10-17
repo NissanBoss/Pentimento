@@ -159,3 +159,13 @@ func TestTheEndOfAnEarlierJPEG(t *testing.T) {
 	newer := encodeJPEG(t, photo(300, 200, 14), 80)
 	check(t, "snip.jpg", overwritten(newer, older)).only(t, "jpeg-tail")
 }
+
+// A letter cropped with jpegtran, which keeps every marker: a strip of
+// text, and a thumbnail of the whole page.
+func TestAThumbnailOfALetterBeforeTheCrop(t *testing.T) {
+	letter := page(900, 600, 50)
+	thumb := encodeJPEG(t, shrunk(letter, 160, 107), 75)
+	main := encodeJPEG(t, cropped(letter, image.Rect(0, 40, 600, 240)), 92)
+	c := check(t, "letter.jpg", withSegments(main, exifWithThumbnail(thumb)))
+	c.only(t, "preview-differs")
+}
