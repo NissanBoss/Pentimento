@@ -23,10 +23,15 @@ func (c *run) pixels(where string, data []byte) {
 		c.gap(where, "the picture could not be decoded, so its pixels were not looked at")
 		return
 	}
-	c.pixelsOf(where, img)
+	c.pixelsOf(where, img, false)
 }
 
-func (c *run) pixelsOf(where string, img image.Image) {
+// camera is a photo a camera wrote, by its EXIF. In those, boxes that let
+// things through are not looked for: in thirteen hundred and fifty phone
+// photos there was not one, and the grain of a photo on the dark stroke
+// of a letter, or on a sign, made several. A screenshot saved as JPEG has
+// no camera, and is still looked at.
+func (c *run) pixelsOf(where string, img image.Image, camera bool) {
 	b := img.Bounds()
 	if b.Dx() < 8 || b.Dy() < 4 || b.Dx()*b.Dy() > 80<<20 {
 		return
@@ -36,6 +41,9 @@ func (c *run) pixelsOf(where string, img image.Image) {
 	for _, m := range mosaics(px, b.Dx(), b.Dy(), lossless) {
 		c.hit("mosaic", where, fmt.Sprintf("%dx%d at %d,%d, in blocks of %d pixels, %d across and %d down.",
 			m.r.Dx(), m.r.Dy(), b.Min.X+m.r.Min.X, b.Min.Y+m.r.Min.Y, m.block, m.r.Dx()/m.block, max(1, m.r.Dy()/m.block)))
+	}
+	if camera {
+		return
 	}
 	for _, t := range seeThrough(px, b.Dx(), b.Dy(), lossless) {
 		c.hit("shows-through", where, fmt.Sprintf("%dx%d at %d,%d: what is under it differs by %d levels out of 255, so stretching the contrast about %dx shows it.",
@@ -349,7 +357,11 @@ func seeThrough(px []uint32, w, h int, lossless bool) []cover {
 	for i, c := range px {
 		lum[i] = uint8(luma(c))
 	}
-	minSpread, maxSpread := 3, join
+	// In a screenshot, a spread under six is the texture of a swatch and
+	// one over forty is light text on a grey header, both found in the
+	// calibration's screenshots; a box at ninety per cent over black text
+	// is about twenty, and at ninety seven per cent about six.
+	minSpread, maxSpread := 6, 40
 	if !lossless {
 		// A photo has real rectangles with faint text in them, a printed
 		// card in a shop at forty six levels in the first camera photos
@@ -401,6 +413,13 @@ func seeThrough(px []uint32, w, h int, lossless bool) []cover {
 		if !lossless && (bw < max(40, w/50) || bh < 16) {
 			continue
 		}
+		// A toolbar button greyed out because it cannot be used is a
+		// dimmer copy of its icon, which is exactly what a box that lets
+		// things through is; the same one turned up in two screenshots of
+		// the calibration. Icons are smaller than a line of text.
+		if bw < 40 || bh < 12 {
+			continue
+		}
 		inside := 0
 		for y := bx.y0; y <= bx.y1; y++ {
 			for x := bx.x0; x <= bx.x1; x++ {
@@ -436,7 +455,7 @@ func seeThrough(px []uint32, w, h int, lossless bool) []cover {
 		if framed(lum, w, h, bx.x0, bx.y0, bx.x1, bx.y1, mode) {
 			continue
 		}
-		if !strokes(lum, w, bx.x0+2, bx.y0+2, bx.x1-2, bx.y1-2, mode, max(2, spread/3)) {
+		if !strokes(lum, w, bx.x0+2, bx.y0+2, bx.x1-2, bx.y1-2, mode, max(2, spread/3), lossless) {
 			continue
 		}
 		out = append(out, cover{image.Rect(bx.x0, bx.y0, bx.x1+1, bx.y1+1), spread})
@@ -537,7 +556,7 @@ func steppedEdges(lum []uint8, labels []int32, w, h int, l int32, x0, y0, x1, y1
 // shaped like something: three or more separate marks of a few pixels
 // each, covering a small part of the box. Noise is single pixels
 // everywhere; a gradient is everything.
-func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int) bool {
+func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int, lossless bool) bool {
 	bw, bh := x1-x0+1, y1-y0+1
 	if bw < 4 || bh < 4 {
 		return false
@@ -553,7 +572,15 @@ func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int) bool {
 		}
 	}
 	share := float64(count) / float64(bw*bh)
-	if share < 0.005 || share > 0.6 {
+	// In a photo the marks must be a fair part of the box: a thick
+	// stroke of a big letter on a sign, flecked with dust, came out as a
+	// box over text in an iPhone photo. Text under a cover is a tenth of
+	// it or more; dust is a few specks.
+	least := 0.005
+	if !lossless {
+		least = 0.03
+	}
+	if share < least || share > 0.6 {
 		return false
 	}
 	marks, lines := 0, 0

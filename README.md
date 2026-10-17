@@ -204,7 +204,32 @@ ninety per cent, a mosaic, and a crop saved over the old file by Pillow.
 
 **Hundreds of ordinary files**, once a week
 ([`calibrate.yml`](.github/workflows/calibrate.yml)), from Wikimedia
-Commons as their owners uploaded them: CALIBRATION_TABLE
+Commons as their owners uploaded them. The last run, 17 October 2026:
+
+- **450 Pixel photos** (Pixel 6, 7 and 8): a motion video in 25, the photo
+  before Portrait Light in 1, depth maps in 2, a thumbnail showing more of
+  the scene than the photo in 26, and one mosaic.
+- **450 Samsung photos** (S10, S21 Ultra, S23): the phone's trailer in 244,
+  nearly always with the country of the mobile network; a motion video in
+  12; the unblurred shots from before Live Focus in 2; depth maps in 2; a
+  thumbnail showing more than the photo in 11, and differing from it in
+  one place in 2.
+- **450 iPhone photos** (iPhone 12, 13 and 14): a thumbnail showing more
+  than the photo in 2.
+- **283 screenshots** of Android, iOS, Windows, macOS and Ubuntu: Samsung's
+  trailer, naming the app that was open, in 5.
+- **89 camera files** from exif-samples: a thumbnail showing more than the
+  picture in 2.
+
+Every thumbnail that shows more than its photo and was looked at by hand
+was a real crop: photos trimmed before they were uploaded, in an editor
+that left the thumbnail as it was. One had been cropped to take a woman
+off a tram platform, and the thumbnail inside it still showed her. The
+two Samsung photos that differ from their thumbnails in one place could
+not be told apart, by eye, from what the phone's HDR does to a thumbnail.
+That run also found four boxes over text in the screenshots and one in an
+iPhone photo; none of them was one, and the rules that let them through
+were changed after it (below).
 
 What the calibration taught, all of it in the code:
 
@@ -215,16 +240,28 @@ What the calibration taught, all of it in the code:
 - A page of text shrunk to a thumbnail matches itself badly, a strip
   cropped from a letter scoring 0.56 in the right place; the first version
   did not find jpegtran's crop at all.
-- In a photo, small bright rectangles with faint marks in them are signs,
-  windows and labels; thirteen of them in nine hundred photos looked like
-  boxes over text. In a JPEG, a hard-compressed sky is blocks of eight on
+- In a photo, rectangles with faint marks in them are signs, windows,
+  labels and the thick strokes of big letters flecked with dust; thirteen
+  of them in the first nine hundred photos, and one more later, looked like
+  boxes over text, and not one real box turned up in thirteen hundred and
+  fifty. So in photos a camera took, boxes that let things through are no
+  longer looked for. In a JPEG, a hard-compressed sky is blocks of eight on
   JPEG's own grid, which is a mosaic in every way but the size of the steps
   between blocks.
+- In screenshots, a toolbar button greyed out because it cannot be used is
+  a dimmer copy of its icon, which is exactly what a box that lets things
+  through is. Icons are now too small to count, and so are spreads of
+  levels too faint or too strong for any cover.
 - Pixel 4a to 6 photos end with tens of kilobytes of the camera app's own
   tuning data, and Pixels list their motion video a little shorter than
   it is.
 - Samsung's screenshots carry the same trailer as its photos, and in a
   screenshot it names the app that was open.
+- On six hundred and forty seven screenshots of the author's own, bars of
+  grey with a hairline every eight pixels, drawn by a program on every
+  line of one window, came out as fifteen boxes over text. Text under a
+  cover is marks of every shape, and a pattern of lines from side to side
+  is no longer taken for it. After that, nothing turned up in any of them.
 - Of a hundred and nineteen draw.io SVGs found on GitHub, three carry
   pages the picture does not show. Of a hundred and two Excalidraw SVGs,
   none carries a deleted element (current versions leave them out of the
@@ -267,11 +304,14 @@ yourself avoids the question.
   photo out of focus, and a filled-in background from a real one, is not
   something this can do well enough to say. A blur that kept the original
   in the file, as Portrait does, is found by the original.
-- **Covers at the very edge of a photo are missed**, in the outer six per
-  cent, where lens correction moves a photo against its own thumbnail; and
-  in a photo, boxes narrower than a fiftieth of it are not reported, and
-  only covers of eighty five per cent opacity and up. In screenshots,
-  which are lossless, these limits do not apply.
+- **In photos a camera took, boxes that let things through are not looked
+  for**, because the grain of real photos made more false ones than the
+  calibration ever found true ones. Screenshots, PNG or JPEG, are looked
+  at, for boxes of forty pixels across and more, covering at about
+  eighty five and ninety seven per cent.
+- **A cover at the very edge of a photo is missed by the thumbnail
+  comparison**, in the outer six per cent, where lens correction moves a
+  photo against its own thumbnail.
 - **What comes back of a cropped screenshot depends on the encoder.** Rows
   the compressor wrote as copies of rows that are gone cannot be had
   exactly; the public tools fill them with a guess, and this counts only

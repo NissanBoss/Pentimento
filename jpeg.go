@@ -182,3 +182,15 @@ func (j *jpegFile) mpfImages(data []byte) []mpfEntry {
 	}
 	return out
 }
+
+// fromCamera says whether the EXIF names a make or a model, which a
+// camera or a phone writes and a screenshot tool does not.
+func (j *jpegFile) fromCamera() bool {
+	t, err := parseTIFF(j.exif)
+	if err != nil {
+		return false
+	}
+	_, mk := t.ifd0[0x010f]
+	_, md := t.ifd0[0x0110]
+	return mk || md
+}
