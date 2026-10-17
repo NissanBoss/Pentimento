@@ -198,8 +198,8 @@ the original: 2,437,785 bytes in one and 378 in the other, all of them
 right.
 
 **Files made with the tools people use**, on every push: a letter set in
-ImageMagick with a thumbnail put in by ExifTool, then a box drawn over its
-account number by ImageMagick, a strip cropped out by jpegtran, a box at
+ImageMagick with a thumbnail put in by ExifTool, then a box drawn over a line
+of it by ImageMagick, a strip cropped out by jpegtran, a box at
 ninety per cent, a mosaic, and a crop saved over the old file by Pillow.
 
 **Hundreds of ordinary files**, once a week

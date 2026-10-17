@@ -13,10 +13,10 @@ cd "$out"
 
 # A page of text, like a letter or a screenshot of one.
 convert -size 900x600 xc:'#f6f6f0' -fill '#1e1e28' -font DejaVu-Sans -pointsize 22 \
-    -annotate +40+60 'Account holder: Marisol Etxeberria Ugarte' \
-    -annotate +40+100 'IBAN ES91 2100 0418 4502 0005 1332' \
-    -annotate +40+140 'Address: Calle de la Princesa 31, 4 izquierda' \
-    -annotate +40+180 'Reference 8841-22-TX, due 17 November' \
+    -annotate +40+60 'Notes from the garden committee, spring meeting' \
+    -annotate +40+100 'Plant the tomatoes along the south wall first' \
+    -annotate +40+140 'Order more compost before the end of March' \
+    -annotate +40+180 'Next meeting in the library, room twelve' \
     -annotate +40+260 'The quick brown fox jumps over the lazy dog 0123456789' \
     -annotate +40+300 'Pack my box with five dozen liquor jugs, twice over' \
     page.png
@@ -25,16 +25,16 @@ convert page.png -thumbnail 160x107 thumb.jpg
 exiftool -q -overwrite_original '-ThumbnailImage<=thumb.jpg' page.jpg
 
 cp page.jpg clean__camera-like.jpg
-# A box over the IBAN, drawn with the EXIF block kept as it was, which is
+# A box over the second line, drawn with the EXIF block kept as it was, which is
 # what ImageMagick does by default.
 convert page.jpg -fill black -draw 'rectangle 30,75 560,110' preview-differs__imagemagick-box.jpg
 # A lossless crop that copies every marker, thumbnail included.
 jpegtran -crop 600x200+0+40 -copy all page.jpg > preview-differs__jpegtran-crop.jpg
 
-# A box at ninety per cent over the IBAN, and the same box solid.
+# A box at ninety per cent over the second line, and the same box solid.
 convert page.png -fill 'rgba(0,0,0,0.9)' -draw 'rectangle 30,75 560,110' shows-through__imagemagick-90.png
 convert page.png -fill black -draw 'rectangle 30,75 560,110' clean__imagemagick-solid.png
-# A mosaic over the name, blocks of ten.
+# A mosaic over the first line, blocks of ten.
 convert page.png \( +clone -crop 520x40+30+35 +repage -scale 10% -scale 1000% \) \
     -geometry +30+35 -composite mosaic__imagemagick-pixelate.png
 
