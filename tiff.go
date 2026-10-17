@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/binary"
 	"errors"
+	"strings"
 )
 
 type tiff struct {
@@ -97,4 +98,24 @@ func (d ifd) uint(tag uint16) (uint32, bool) {
 		return e.order.Uint32(e.value), true
 	}
 	return 0, false
+}
+
+// sub reads the IFD a tag of d points to, as the EXIF IFD is pointed to
+// from IFD0.
+func (t *tiff) sub(d ifd, tag uint16) ifd {
+	at, ok := d.uint(tag)
+	if !ok {
+		return nil
+	}
+	out, _ := t.readIFD(int(at))
+	return out
+}
+
+// text reads an ASCII tag.
+func (d ifd) text(tag uint16) string {
+	e, ok := d[tag]
+	if !ok || e.kind != 2 {
+		return ""
+	}
+	return strings.TrimRight(string(e.value), "\x00 ")
 }

@@ -22,6 +22,11 @@ func TestAThumbnailFromBeforeTheCrop(t *testing.T) {
 	if !strings.Contains(c.hits["preview-differs"][0].what, "more than the picture") {
 		t.Errorf("the crop was not described as one: %v", c.hits["preview-differs"])
 	}
+	// With the size the camera wrote, which the editor left as it was.
+	c = check(t, "cropped.jpg", withSegments(main, exifWithThumbnail(thumb, image.Pt(1200, 900))))
+	if more := c.hits["preview-differs"][0].more; len(more) == 0 || !strings.Contains(more[0], "made it 1200x900, and it is 700x600") {
+		t.Errorf("the EXIF size was not said: %v", c.hits["preview-differs"])
+	}
 }
 
 // A black box drawn over a name on a photo of a letter, and the thumbnail

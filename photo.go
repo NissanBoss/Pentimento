@@ -31,7 +31,7 @@ func (c *run) jpeg(where string, data []byte) {
 		switch e.role {
 		case rolePreview, roleImage:
 			if p := pic(); p != nil {
-				c.copyOf(where, p, e)
+				c.copyOf(where, p, e, cutFrom(j, p))
 			}
 		case roleOriginal:
 			line := capital(e.what) + ", " + describe(e) + "."
@@ -77,7 +77,9 @@ func (c *run) jpeg(where string, data []byte) {
 }
 
 // copyOf compares the picture with a copy of it and says what differs.
-func (c *run) copyOf(where string, p image.Image, e embedded) {
+// cut, when it is not empty, is what the EXIF says about the picture
+// having been cut down, which backs up a copy that shows more.
+func (c *run) copyOf(where string, p image.Image, e embedded, cut string) {
 	img, err := decodePicture(e.data)
 	if err != nil {
 		if e.role == rolePreview {
@@ -105,6 +107,9 @@ func (c *run) copyOf(where string, p image.Image, e embedded) {
 	var lines []string
 	if r.outside > 0.03 {
 		lines = append(lines, fmt.Sprintf("%s (%dx%d) shows %s more than the picture: what a crop or a zoom took off.", name, ib.Dx(), ib.Dy(), percent(r.outside, 1)))
+		if cut != "" {
+			lines = append(lines, cut)
+		}
 	}
 	if len(r.changed) > 0 {
 		big := r.changed[0]
@@ -125,6 +130,20 @@ func (c *run) copyOf(where string, p image.Image, e embedded) {
 	if len(lines) > 0 {
 		c.hit("preview-differs", where, lines[0], lines[1:]...)
 	}
+}
+
+// cutFrom says so when the picture is smaller than the EXIF says the
+// camera made it, either way round.
+func cutFrom(j *jpegFile, p image.Image) string {
+	made, ok := j.madeAs()
+	is := p.Bounds().Size()
+	if !ok || made == is || made == image.Pt(is.Y, is.X) {
+		return ""
+	}
+	if is.X*is.Y >= made.X*made.Y {
+		return ""
+	}
+	return fmt.Sprintf("Its EXIF says the camera made it %dx%d, and it is %dx%d now.", made.X, made.Y, is.X, is.Y)
 }
 
 func describe(e embedded) string {

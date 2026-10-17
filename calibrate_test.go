@@ -62,7 +62,11 @@ func TestCalibration(t *testing.T) {
 				counts[k]++
 				if kindsOfHit[k].weight >= Weak {
 					for _, h := range hits {
-						loud = append(loud, fmt.Sprintf("%s/%s: %s: %s", g, filepath.Base(f), k, h.what))
+						line := fmt.Sprintf("%s/%s: %s: %s", g, filepath.Base(f), k, h.what)
+						if k == "preview-differs" {
+							line += " [" + editTrail(data) + "]"
+						}
+						loud = append(loud, line)
 					}
 				}
 			}
@@ -84,4 +88,25 @@ func TestCalibration(t *testing.T) {
 		}
 	}
 	t.Log("\n" + strings.Join(table, "\n"))
+}
+
+// editTrail is what the EXIF says about how a photo got to be what it
+// is: the size the camera made it, the size it is, the program that saved
+// it last, and whether it was saved later than it was taken. A thumbnail
+// that shows more, in a photo at its camera's size saved by its camera's
+// own software at the time it was taken, is the camera's doing, and the
+// rule that found it has to learn that.
+func editTrail(data []byte) string {
+	j := readJPEG(data)
+	t, err := parseTIFF(j.exif)
+	if err != nil {
+		return "no EXIF"
+	}
+	e := t.sub(t.ifd0, 0x8769)
+	made := "?"
+	if m, ok := j.madeAs(); ok {
+		made = fmt.Sprintf("%dx%d", m.X, m.Y)
+	}
+	later := e.text(0x9003) != "" && t.ifd0.text(0x0132) != "" && e.text(0x9003) != t.ifd0.text(0x0132)
+	return fmt.Sprintf("made %s, is %dx%d, saved by %q, later %v", made, j.width, j.height, t.ifd0.text(0x0131), later)
 }

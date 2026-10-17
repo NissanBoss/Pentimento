@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"image"
 )
 
 type jpegFile struct {
@@ -181,6 +182,23 @@ func (j *jpegFile) mpfImages(data []byte) []mpfEntry {
 		out = append(out, mpfEntry{kind: attr & 0xffffff, at: at, n: n, inFile: data[at : at+n]})
 	}
 	return out
+}
+
+// madeAs is the size the EXIF says the picture was when the camera made
+// it. An editor that crops most often copies the EXIF as it was, so a
+// picture smaller than that was cut down.
+func (j *jpegFile) madeAs() (image.Point, bool) {
+	t, err := parseTIFF(j.exif)
+	if err != nil {
+		return image.Point{}, false
+	}
+	e := t.sub(t.ifd0, 0x8769)
+	w, okw := e.uint(0xa002)
+	h, okh := e.uint(0xa003)
+	if !okw || !okh || w == 0 || h == 0 {
+		return image.Point{}, false
+	}
+	return image.Pt(int(w), int(h)), true
 }
 
 // fromCamera says whether the EXIF names a make or a model, which a

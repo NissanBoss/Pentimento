@@ -145,26 +145,44 @@ func segment(marker byte, body []byte) []byte {
 	return append(s, body...)
 }
 
-// exifWithThumbnail is an APP1 EXIF segment whose IFD1 holds a thumbnail.
-func exifWithThumbnail(thumb []byte) []byte {
+// exifWithThumbnail is an APP1 EXIF segment whose IFD1 holds a thumbnail,
+// and, given a size, an EXIF IFD saying the camera made the picture that
+// size.
+func exifWithThumbnail(thumb []byte, made ...image.Point) []byte {
 	var t bytes.Buffer
 	le := binary.LittleEndian
-	t.WriteString("II*\x00")
-	binary.Write(&t, le, uint32(8))
-	// IFD0, empty, pointing at IFD1
-	binary.Write(&t, le, uint16(0))
-	binary.Write(&t, le, uint32(14))
-	// IFD1 at 14: two entries, then the thumbnail at 14+2+24+4 = 44
-	binary.Write(&t, le, uint16(2))
-	entry := func(tag uint16, v uint32) {
+	entry := func(tag, kind uint16, v uint32) {
 		binary.Write(&t, le, tag)
-		binary.Write(&t, le, uint16(4))
+		binary.Write(&t, le, kind)
 		binary.Write(&t, le, uint32(1))
 		binary.Write(&t, le, v)
 	}
-	entry(0x0201, 44)
-	entry(0x0202, uint32(len(thumb)))
+	n0 := uint16(len(made))
+	ifd1 := 8 + 2 + 12*uint32(n0) + 4
+	sub := ifd1 + 30
+	pic := sub
+	if n0 > 0 {
+		pic += 30
+	}
+	t.WriteString("II*\x00")
+	binary.Write(&t, le, uint32(8))
+	// IFD0, pointing at the EXIF IFD if there is one, and at IFD1
+	binary.Write(&t, le, n0)
+	if n0 > 0 {
+		entry(0x8769, 4, sub)
+	}
+	binary.Write(&t, le, ifd1)
+	// IFD1: where the thumbnail is
+	binary.Write(&t, le, uint16(2))
+	entry(0x0201, 4, pic)
+	entry(0x0202, 4, uint32(len(thumb)))
 	binary.Write(&t, le, uint32(0))
+	if n0 > 0 {
+		binary.Write(&t, le, uint16(2))
+		entry(0xa002, 4, uint32(made[0].X))
+		entry(0xa003, 4, uint32(made[0].Y))
+		binary.Write(&t, le, uint32(0))
+	}
 	t.Write(thumb)
 	return segment(0xe1, append([]byte("Exif\x00\x00"), t.Bytes()...))
 }
