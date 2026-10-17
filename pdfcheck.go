@@ -195,7 +195,7 @@ func pdfImage(doc *Document, s *Stream) image.Image {
 	w, _ := doc.Resolve(s.Dict["Width"]).(float64)
 	h, _ := doc.Resolve(s.Dict["Height"]).(float64)
 	bpc, _ := doc.Resolve(s.Dict["BitsPerComponent"]).(float64)
-	channels := map[Name]int{"DeviceGray": 1, "DeviceRGB": 3, "G": 1, "RGB": 3}[nameOf(doc.Resolve(s.Dict["ColorSpace"]))]
+	channels := colourChannels(doc, s.Dict["ColorSpace"])
 	if bpc != 8 || channels == 0 || w < 1 || h < 1 || w*h > 1<<26 {
 		return nil
 	}
@@ -250,4 +250,23 @@ func blankUnder(img image.Image, picture, box pdfRect) bool {
 	}
 	m := s / n
 	return sq/n-m*m < 9
+}
+
+// colourChannels counts the channels of a colour space this reads: grey,
+// RGB, and an ICC profile of either, which is how PyMuPDF writes a picture
+// it has redacted.
+func colourChannels(doc *Document, v any) int {
+	switch cs := doc.Resolve(v).(type) {
+	case Name:
+		return map[Name]int{"DeviceGray": 1, "DeviceRGB": 3, "G": 1, "RGB": 3}[cs]
+	case Array:
+		if len(cs) == 2 && doc.Resolve(cs[0]) == Name("ICCBased") {
+			if s, ok := doc.Resolve(cs[1]).(*Stream); ok {
+				if n, ok := doc.Resolve(s.Dict["N"]).(float64); ok && (n == 1 || n == 3) {
+					return int(n)
+				}
+			}
+		}
+	}
+	return 0
 }

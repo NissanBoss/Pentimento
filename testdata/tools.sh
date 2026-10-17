@@ -86,10 +86,9 @@ doc.save("pdf-annotation__pymupdf-square.pdf")
 PY
 rm -f pic.jpg
 
-# What LibreOffice makes of a slide and a document with cropped pictures
-# and a box over a picture, exported to PDF. These are reported, not
-# checked against a name: they are what the export does, and the test
-# prints it.
+# A slide and two documents with cropped pictures, exported to PDF by
+# LibreOffice: the export puts every picture in whole and clips it, so
+# the crop survives into the PDF.
 for f in 54542_cropped_bitmap.pptx; do
     curl -sSfL -o "$f" "https://raw.githubusercontent.com/apache/poi/598e21ca4ee6e9f34d79a0c7411f8e6c802512c6/test-data/slideshow/$f"
 done
@@ -97,7 +96,7 @@ curl -sSfL -o croppedAndRotated.odt "https://raw.githubusercontent.com/LibreOffi
 curl -sSfL -o ImageCrop.docx "https://raw.githubusercontent.com/LibreOffice/core/c5089c5db6897db4a7e49e3e526b01db34ed6c02/sw/qa/extras/ooxmlexport/data/ImageCrop.docx"
 soffice --headless --convert-to pdf 54542_cropped_bitmap.pptx croppedAndRotated.odt ImageCrop.docx >/dev/null 2>&1 || true
 for f in 54542_cropped_bitmap croppedAndRotated ImageCrop; do
-    [ -s "$f.pdf" ] && mv "$f.pdf" "report__libreoffice-$f.pdf"
+    [ -s "$f.pdf" ] && mv "$f.pdf" "pdf-crop__libreoffice-$f.pdf"
     rm -f "$f.pptx" "$f.odt" "$f.docx"
 done
 ls -la
