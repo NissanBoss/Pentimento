@@ -113,7 +113,7 @@ func compareCopies(main, copied image.Image) comparison {
 	}
 	// A Pixel corrects the distortion of its lens after making the
 	// thumbnail, and the correction trims a few per cent off every edge:
-	// the thumbnail of a third of the Pixel photos in the calibration
+	// the thumbnail of one Pixel photo in seven in the calibration
 	// showed four or five per cent more than the photo, in the same shape.
 	// A crop by hand that keeps the shape and takes less than a tenth is
 	// rarer than that, and hides little.
