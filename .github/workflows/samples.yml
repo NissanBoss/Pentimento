@@ -49,3 +49,12 @@ jobs:
 
       - name: Check them
         run: PENTIMENTO_TOOLS="$RUNNER_TEMP/tools" go test -run TestMadeByTools -v .
+
+      # What was made is nobody's, and is kept to look at when a check
+      # fails.
+      - name: Keep the files made
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: made-by-tools
+          path: ${{ runner.temp }}/tools
