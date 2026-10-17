@@ -49,7 +49,7 @@ func main() {
 	// to a halt.
 	debug.SetMemoryLimit(2 << 30)
 
-	files, err := filesIn(flag.Args())
+	files, err := filesIn(flag.Args(), show)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pentimento: %v\n", err)
 		os.Exit(exitBroken)

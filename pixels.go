@@ -556,13 +556,14 @@ func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int) bool {
 	if share < 0.005 || share > 0.6 {
 		return false
 	}
-	marks := 0
+	marks, lines := 0, 0
 	seen := make([]bool, len(off))
 	for i := range off {
 		if !off[i] || seen[i] {
 			continue
 		}
 		size := 0
+		mx0, my0, mx1, my1 := bw, bh, -1, -1
 		stack := []int{i}
 		seen[i] = true
 		for len(stack) > 0 {
@@ -570,6 +571,7 @@ func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int) bool {
 			stack = stack[:len(stack)-1]
 			size++
 			x, y := k%bw, k/bw
+			mx0, my0, mx1, my1 = min(mx0, x), min(my0, y), max(mx1, x), max(my1, y)
 			for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
 				nx, ny := x+d[0], y+d[1]
 				if nx >= 0 && ny >= 0 && nx < bw && ny < bh {
@@ -583,9 +585,17 @@ func strokes(lum []uint8, w, x0, y0, x1, y1, mode, by int) bool {
 		}
 		if size >= 4 {
 			marks++
+			w, h := mx1-mx0+1, my1-my0+1
+			if w <= 2 && h*5 >= bh*4 || h <= 2 && w*5 >= bw*4 {
+				lines++
+			}
 		}
 	}
-	return marks >= 3
+	// Text under a cover is marks of all shapes. Thin lines from one side
+	// to the other are a pattern the program drew: a bar of grey with a
+	// hairline every eight pixels, on every line of a real screenshot of
+	// a terminal, came out as fifteen boxes over text.
+	return marks >= 3 && lines*5 < marks*4
 }
 
 func modeOf(sorted []int) int {

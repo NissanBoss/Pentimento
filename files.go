@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -81,7 +82,9 @@ var worthOpening = map[string]bool{
 
 // filesIn lists what is under the paths given. A file named on the
 // command line is always opened, whatever it is called.
-func filesIn(paths []string) ([]string, error) {
+// The error names the path the way the report would, home folder as ~:
+// the system's own message spells out the whole path, user name and all.
+func filesIn(paths []string, show shower) ([]string, error) {
 	var out []string
 	for _, root := range paths {
 		abs, err := filepath.Abs(root)
@@ -90,7 +93,7 @@ func filesIn(paths []string) ([]string, error) {
 		}
 		info, err := os.Stat(abs)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: no such file or folder, or it cannot be opened", show.path(abs))
 		}
 		if !info.IsDir() {
 			out = append(out, abs)
