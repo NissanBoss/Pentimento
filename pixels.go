@@ -26,11 +26,12 @@ func (c *run) pixels(where string, data []byte) {
 	c.pixelsOf(where, img, true, false)
 }
 
-// camera is a photo a camera wrote, by its EXIF. In those, boxes that let
+// camera is a photo a camera wrote, by its EXIF. In photos, boxes that let
 // things through are not looked for: in thirteen hundred and fifty phone
 // photos there was not one, and the grain of a photo on the dark stroke
-// of a letter, or on a sign, made several. A screenshot saved as JPEG has
-// no camera, and is still looked at.
+// of a letter, or on a sign, made several. The same photos with their
+// EXIF taken off, which is how a chat app sends them, made eighteen more,
+// so a JPEG without a camera is looked at only when it is of a screen.
 //
 // Whether the picture is lossless comes from its format and not from how
 // it decodes: a JPEG of grey text on grey decodes as grey, the way a PNG
@@ -46,14 +47,21 @@ func (c *run) pixelsOf(where string, img image.Image, lossless, camera bool) {
 	// alone does not say which: a phone photo sent through a chat app has
 	// none left, and two of them, stripped, had ten mosaics each.
 	screen := lossless || !camera && screenLike(px, b.Dx(), b.Dy())
-	for _, m := range mosaics(px, b.Dx(), b.Dy(), lossless, !screen) {
+	g := exactColours
+	switch {
+	case !lossless && screen:
+		g = screenJPEG
+	case !lossless:
+		g = photoJPEG
+	}
+	for _, m := range mosaics(px, b.Dx(), b.Dy(), g) {
 		c.hit("mosaic", where, fmt.Sprintf("%dx%d at %d,%d, in blocks of %d pixels, %d across and %d down.",
 			m.r.Dx(), m.r.Dy(), b.Min.X+m.r.Min.X, b.Min.Y+m.r.Min.Y, m.block, m.r.Dx()/m.block, max(1, m.r.Dy()/m.block)))
 	}
-	if camera {
+	if !screen {
 		return
 	}
-	for _, t := range seeThrough(px, b.Dx(), b.Dy(), lossless, screen) {
+	for _, t := range seeThrough(px, b.Dx(), b.Dy(), lossless) {
 		c.hit("shows-through", where, fmt.Sprintf("%dx%d at %d,%d: what is under it differs by %d levels out of 255, so stretching the contrast about %dx shows it.",
 			t.r.Dx(), t.r.Dy(), b.Min.X+t.r.Min.X, b.Min.Y+t.r.Min.Y, t.spread, max(2, 255/max(1, t.spread))))
 	}
@@ -108,6 +116,23 @@ func near(a, b uint32, tol int) bool {
 	return true
 }
 
+// grain is how closely a picture keeps its colours, and so how closely a
+// mosaic in it is held to its grid.
+type grain int
+
+const (
+	// exactColours is a lossless picture: a block is one colour, exactly.
+	exactColours grain = iota
+	// photoJPEG is a JPEG of anything but a screen, held to the grid as
+	// the first release held every JPEG, a few levels either way: in the
+	// calibration that found the one real mosaic in thousands of photos
+	// and nothing else, where looser rules found hundreds.
+	photoJPEG
+	// screenJPEG is a JPEG of a screen, where an edge may be a pixel off
+	// the grid and a band two rows off.
+	screenJPEG
+)
+
 type mosaic struct {
 	r     image.Rectangle
 	block int
@@ -130,12 +155,12 @@ type mosaic struct {
 // A photo is held to the grid exactly: leaves, cloth and the grain of a
 // wall fit a grid that lets edges a pixel off it, and seven phone photos
 // of the samples had dozens of mosaics that way.
-func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
+func mosaics(px []uint32, w, h int, g grain) []mosaic {
 	minBlock := 3
-	if !lossless {
+	if g != exactColours {
 		minBlock = 8
 	}
-	strict := lossless || photo
+	strict := g != screenJPEG
 	const maxBlock = 64
 	type key struct{ block, phase int }
 	type span struct{ x0, x1, y0, y1 int }
@@ -146,7 +171,7 @@ func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
 		found := map[key][]span{}
 		if y < h {
 			line := px[y*w : (y+1)*w]
-			edges = rowEdges(line, edges[:0], lossless)
+			edges = rowEdges(line, edges[:0], g)
 			for block := minBlock; block <= maxBlock; block++ {
 				for i := 0; i < len(edges); {
 					// j is the last edge on the grid. In a JPEG an edge can be a
@@ -177,7 +202,7 @@ func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
 					// edges everywhere.
 					if on >= 3 && exact >= 2 {
 						k := key{block, edges[i] % block}
-						if !lossless {
+						if !strict {
 							// A pixel of jitter moves the phase from row to row.
 							k.phase = 0
 						}
@@ -198,7 +223,7 @@ func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
 				// under it, wherever a line of it happened to fit the grid.
 				for n, f := range found[k] {
 					lo, hi := max(s.x0, f.x0), min(s.x1, f.x1)
-					if lo < hi && (sameRow(px, w, y, lo, hi, lossless) || bandEdge(y-s.y0, k.block, lossless)) {
+					if lo < hi && (sameRow(px, w, y, lo, hi, g) || bandEdge(y-s.y0, k.block, g)) {
 						// Two regions can reach the same row; they become one, and
 						// keep the top of the older, which the second used to
 						// overwrite.
@@ -210,13 +235,13 @@ func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
 				// A band of blocks that are nearly all the paper's colour has no
 				// edges to find, and must not end the region: it stays open
 				// two blocks' worth of rows.
-				if !joined && y < h && y-s.y1 < 2*k.block && (bandEdge(y-s.y0, k.block, lossless) || sameRow(px, w, y, s.x0+k.block, s.x1-k.block, lossless)) {
+				if !joined && y < h && y-s.y1 < 2*k.block && (bandEdge(y-s.y0, k.block, g) || sameRow(px, w, y, s.x0+k.block, s.x1-k.block, g)) {
 					next[k] = append(next[k], s)
 					continue
 				}
 				if !joined {
 					r := image.Rect(max(0, s.x0), s.y0, min(w, s.x1), s.y1)
-					if m, ok := checkMosaic(px, w, r, k.block, lossless); ok {
+					if m, ok := checkMosaic(px, w, r, k.block, g); ok {
 						done = append(done, m)
 					}
 				}
@@ -234,7 +259,7 @@ func mosaics(px []uint32, w, h int, lossless, photo bool) []mosaic {
 // at least a block tall, rows that change only where a block ends, and
 // enough different colours that it is not a pattern of two, which is what
 // a QR code, a checkerboard or a dashed line is.
-func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool) (mosaic, bool) {
+func checkMosaic(px []uint32, w int, r image.Rectangle, block int, g grain) (mosaic, bool) {
 	if r.Dy() < block {
 		return mosaic{}, false
 	}
@@ -244,10 +269,10 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 	// come off the sides.
 	offGrid := func(x0 int) bool {
 		for y := r.Min.Y + 1; y < r.Max.Y; y++ {
-			if bandEdge(y-r.Min.Y, block, lossless) {
+			if bandEdge(y-r.Min.Y, block, g) {
 				continue
 			}
-			if rowsDiffer(px, w, y, x0, min(x0+block, r.Max.X), lossless) {
+			if rowsDiffer(px, w, y, x0, min(x0+block, r.Max.X), g) {
 				return true
 			}
 		}
@@ -265,23 +290,23 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 	// Where the rows change, from the top of the stack.
 	var changes []int
 	for y := r.Min.Y + 1; y < r.Max.Y; y++ {
-		if rowsDiffer(px, w, y, r.Min.X, r.Max.X, lossless) {
+		if rowsDiffer(px, w, y, r.Min.X, r.Max.X, g) {
 			changes = append(changes, y-r.Min.Y)
 		}
 	}
 	for _, c := range changes {
-		if !bandEdge(c, block, lossless) {
+		if !bandEdge(c, block, g) {
 			return mosaic{}, false
 		}
 	}
 	// Two rows of blocks at least. One row of equal blocks in different
 	// colours is a tab bar or a row of swatches as often as it is a mosaic,
 	// and two real screenshots of eighty nine had one.
-	if !lossless {
+	if g == screenJPEG {
 		r = wholeBands(px, w, r, block)
 	}
 	bands := r.Dy() / block
-	if !lossless {
+	if g == screenJPEG {
 		// JPEG rings for a row or two where the mosaic meets the page, and
 		// the region found starts that much late: a mosaic of two bands of
 		// sixteen came out thirty one rows tall.
@@ -310,7 +335,7 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 		return len(colours)
 	}
 	colours := count(0xf0f0f0)
-	if colours < 4 && lossless && r.Dx() >= 200 {
+	if colours < 4 && g == exactColours && r.Dx() >= 200 {
 		colours = count(0xffffff)
 	}
 	// JPEG compresses in blocks of eight, and a smooth sky compressed hard
@@ -318,7 +343,7 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 	// one: neighbouring blocks differ by a few levels, where the blocks of
 	// a mosaic over text differ by tens. Two Pixel photos of six had skies
 	// like that.
-	if !lossless && block%8 == 0 && r.Min.X%8 == 0 && r.Min.Y%8 == 0 && medianStep(px, w, r, block) < 16 {
+	if g != exactColours && block%8 == 0 && r.Min.X%8 == 0 && r.Min.Y%8 == 0 && medianStep(px, w, r, block) < 16 {
 		return mosaic{}, false
 	}
 	// The grid a JPEG of a photo is full of, with an edge let a pixel off
@@ -328,7 +353,7 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 	// photo there is not; and where a photo is smooth enough for that, a
 	// wall or a sky, the next block is the same colour again, where in a
 	// mosaic over text a good part of them are not.
-	if !lossless {
+	if g == screenJPEG {
 		if flat, steps := blockShares(px, w, r, block); flat < 0.85 || steps < 0.25 {
 			return mosaic{}, false
 		}
@@ -341,7 +366,15 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, lossless bool
 	// itself twice in nine hundred, both under seventy pixels wide in
 	// photos four thousand wide; the one real mosaic in the same photos,
 	// a karaoke screen showing its own pixelated preview, was five hundred.
-	if !lossless && r.Dx() < max(64, w/60) {
+	if g != exactColours && r.Dx() < max(64, w/60) {
+		return mosaic{}, false
+	}
+	// A line of text in a JPEG of a screen, eight to twelve blocks of JPEG's
+	// own eight across and two down, came out as a mosaic in twenty one of
+	// six hundred and forty one real screenshots, and in a fifth of a
+	// thousand iPhone photos without their EXIF; at sixteen across and up,
+	// one screenshot was left.
+	if g == screenJPEG && across < 16 {
 		return mosaic{}, false
 	}
 	if colours < 4 || across < 6 || across*bands < 12 {
@@ -400,7 +433,7 @@ type cover struct {
 // the paper were: a spread of a few levels, in strokes. A solid box has
 // no spread at all, and a panel of a program's window with text in it has
 // a spread far bigger than any cover lets through.
-func seeThrough(px []uint32, w, h int, lossless, faint bool) []cover {
+func seeThrough(px []uint32, w, h int, lossless bool) []cover {
 	const join = 48 // neighbours closer than this are one region
 	lum := make([]uint8, len(px))
 	for i, c := range px {
@@ -486,9 +519,6 @@ func seeThrough(px []uint32, w, h int, lossless, faint bool) []cover {
 		if spread, ok := letsThrough(lum, w, h, bx.x0, bx.y0, bx.x1, bx.y1, minSpread, maxSpread, 24, lossless); ok {
 			out = append(out, cover{image.Rect(bx.x0, bx.y0, bx.x1+1, bx.y1+1), spread})
 		}
-	}
-	if !faint {
-		return sortCovers(out)
 	}
 	for _, fb := range faintBoxes(lum, w, h, lossless) {
 		f := fb.r
@@ -711,8 +741,8 @@ func framed(lum []uint8, w, h, x0, y0, x1, y1, mode, near int) bool {
 	return looked > 0 && same*2 > looked
 }
 
-func sameRow(px []uint32, w, y, x0, x1 int, lossless bool) bool {
-	return y > 0 && !rowsDiffer(px, w, y, x0, x1, lossless)
+func sameRow(px []uint32, w, y, x0, x1 int, g grain) bool {
+	return y > 0 && !rowsDiffer(px, w, y, x0, x1, g)
 }
 
 // core trims a region's bounding box to the longest run of rows, and then
@@ -784,14 +814,18 @@ func medianStep(px []uint32, w int, r image.Rectangle, block int) int {
 }
 
 // rowEdges finds where a row changes. In a lossless picture that is any
-// pixel unlike the one before. In a JPEG every pixel is a few levels off
-// its neighbour and the edge of a block is spread over two or three
-// pixels, so an edge is the middle of a step of six levels or more,
-// measured across two pixels.
-func rowEdges(line []uint32, out []int, lossless bool) []int {
-	if lossless {
+// pixel unlike the one before, and in a photo, any pixel more than six
+// levels off it. In a JPEG of a screen the edge of a block is spread over
+// two or three pixels, so an edge is the middle of a step of six levels or
+// more, measured across two pixels.
+func rowEdges(line []uint32, out []int, g grain) []int {
+	if g != screenJPEG {
+		tol := 0
+		if g == photoJPEG {
+			tol = 6
+		}
 		for x := 1; x < len(line); x++ {
-			if line[x] != line[x-1] {
+			if !near(line[x], line[x-1], tol) {
 				out = append(out, x)
 			}
 		}
@@ -818,10 +852,11 @@ func onGrid(d, block int, exact bool) bool {
 }
 
 // rowsDiffer compares a stretch of a row with the row above. Lossless,
-// any pixel counts. In a JPEG one pixel in ten may be off by more than
-// ten levels before the rows are said to differ, which noise never is
-// and the next band of a mosaic always is.
-func rowsDiffer(px []uint32, w, y, x0, x1 int, lossless bool) bool {
+// any pixel counts, and in a photo any pixel more than six levels off. In
+// a JPEG of a screen one pixel in ten may be off by more than ten levels
+// before the rows are said to differ, which noise never is and the next
+// band of a mosaic always is.
+func rowsDiffer(px []uint32, w, y, x0, x1 int, g grain) bool {
 	x0, x1 = max(0, x0), min(w, x1)
 	if y == 0 || x1 <= x0 {
 		return true
@@ -829,8 +864,14 @@ func rowsDiffer(px []uint32, w, y, x0, x1 int, lossless bool) bool {
 	off := 0
 	for x := x0; x < x1; x++ {
 		a, b := px[y*w+x], px[(y-1)*w+x]
-		if lossless {
+		switch g {
+		case exactColours:
 			if a != b {
+				return true
+			}
+			continue
+		case photoJPEG:
+			if !near(a, b, 6) {
 				return true
 			}
 			continue
@@ -845,10 +886,10 @@ func rowsDiffer(px []uint32, w, y, x0, x1 int, lossless bool) bool {
 // bandEdge says whether a row this far below the top of a region is where
 // a new band of blocks may start. A JPEG blurs the first row or two of a
 // mosaic, so the top of the region found can be two rows late, and in
-// a JPEG two rows either way are let by.
-func bandEdge(d, block int, lossless bool) bool {
+// a JPEG of a screen two rows either way are let by.
+func bandEdge(d, block int, g grain) bool {
 	r := d % block
-	if lossless {
+	if g != screenJPEG {
 		return r == 0
 	}
 	return r <= 2 || r >= block-2
@@ -972,13 +1013,21 @@ func sortCovers(out []cover) []cover {
 	return out
 }
 
-// screenLike is whether a JPEG is of a screen: a quarter or more of its
-// blocks of eight are flat to three levels. Screenshots in the samples
-// had thirty to eighty per cent, phone photos none to seven, but for one
-// portrait with a blurred wall behind at thirty eight, which has a camera
-// in its EXIF and is held to the photo rules for that.
+// screenLike is whether a JPEG is of a screen: of its blocks of eight, a
+// sixth or more flat to a level and a quarter flat to three. A screen is
+// areas of one colour, and a JPEG keeps most of them to the level. A
+// smooth photo is flat to three levels too, but rarely to one: a quarter
+// flat to three alone took a fifth of the iPhone photos of the
+// calibration for screens, once their EXIF was off.
 func screenLike(px []uint32, w, h int) bool {
-	flat, all := 0, 0
+	one, three := flatShares(px, w, h)
+	return one >= 1.0/6 && three >= 0.25
+}
+
+// flatShares gives the shares of the blocks of eight that are flat to one
+// level and to three.
+func flatShares(px []uint32, w, h int) (one, three float64) {
+	flat1, flat3, all := 0, 0, 0
 	for y := 0; y+8 <= h; y += 8 {
 		for x := 0; x+8 <= w; x += 8 {
 			lo, hi := 255, 0
@@ -989,10 +1038,16 @@ func screenLike(px []uint32, w, h int) bool {
 				}
 			}
 			all++
+			if hi-lo <= 1 {
+				flat1++
+			}
 			if hi-lo <= 3 {
-				flat++
+				flat3++
 			}
 		}
 	}
-	return all > 0 && flat*4 >= all
+	if all == 0 {
+		return 0, 0
+	}
+	return float64(flat1) / float64(all), float64(flat3) / float64(all)
 }

@@ -34,7 +34,7 @@ func TestCalibration(t *testing.T) {
 		}
 		sort.Strings(files)
 		counts := map[string]int{}
-		read, gaps := 0, 0
+		read, gaps, jpegs, screens := 0, 0, 0, 0
 		var loud []string
 		for _, f := range files {
 			data, err := os.ReadFile(f)
@@ -50,14 +50,21 @@ func TestCalibration(t *testing.T) {
 			if len(c.gaps) > 0 {
 				gaps++
 			}
-			if g != "screenshots" && len(data) > 2 && data[0] == 0xFF && data[1] == 0xD8 {
+			if len(data) > 2 && data[0] == 0xFF && data[1] == 0xD8 {
 				if img, err := decodePicture(data); err == nil {
-					bare := newRun(shower{})
-					bare.pixelsOf(filepath.Base(f), img, false, false)
-					for k, hits := range bare.hits {
-						counts["stripped "+k]++
-						for _, h := range hits {
-							loud = append(loud, fmt.Sprintf("%s/%s: stripped %s: %s", g, filepath.Base(f), k, h.what))
+					jpegs++
+					b := img.Bounds()
+					if screenLike(packed(img), b.Dx(), b.Dy()) {
+						screens++
+					}
+					if g != "screenshots" {
+						bare := newRun(shower{})
+						bare.pixelsOf(filepath.Base(f), img, false, false)
+						for k, hits := range bare.hits {
+							counts["stripped "+k]++
+							for _, h := range hits {
+								loud = append(loud, fmt.Sprintf("%s/%s: stripped %s: %s", g, filepath.Base(f), k, h.what))
+							}
 						}
 					}
 				}
@@ -84,7 +91,9 @@ func TestCalibration(t *testing.T) {
 		for _, k := range kinds {
 			parts = append(parts, fmt.Sprintf("%s %d (%.1f%%)", k, counts[k], 100*float64(counts[k])/float64(max(1, read))))
 		}
-		table = append(table, fmt.Sprintf("%-12s %4d read, %d with a gap: %s", g, read, gaps, strings.Join(parts, ", ")))
+		// How many JPEGs are taken for pictures of a screen, which decides
+		// the rules they are held to.
+		table = append(table, fmt.Sprintf("%-12s %4d read, %d with a gap, %d of %d JPEGs taken for screens: %s", g, read, gaps, screens, jpegs, strings.Join(parts, ", ")))
 		// Every loud finding, by file number, so each one can be looked at
 		// by hand: a rule is only kept when the ones it finds are real.
 		for _, l := range loud {
