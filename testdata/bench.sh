@@ -22,14 +22,17 @@ The quick brown fox jumps over the lazy dog
 Pack my box with five dozen liquor jugs'
 
 page() { # look background ink font
+    look=$1 bg=$2 ink=$3 font=$4
     y=60
+    # The lines become the argument list, which takes the place of the
+    # function's own, hence the copies above.
     echo "$lines" | {
         set --
         while IFS= read -r l; do
             set -- "$@" -annotate "+40+$y" "$l"
             y=$((y + 44))
         done
-        convert -size 900x330 xc:"$2" -fill "$3" -font "$4" -pointsize 22 "$@" "page_$1.png"
+        convert -size 900x330 xc:"$bg" -fill "$ink" -font "$font" -pointsize 22 "$@" "page_$look.png"
     }
 }
 page light '#f6f6f0' '#1e1e28' DejaVu-Sans
