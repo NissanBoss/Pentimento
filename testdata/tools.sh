@@ -139,3 +139,19 @@ soffice --headless --convert-to docx boxed.odt >/dev/null 2>&1 || true
 [ -s boxed.docx ] && mv boxed.docx office-covered__libreoffice-word-box.docx
 rm -f boxed.odt
 ls -la
+
+# The same box behind the text, which Word draws under the picture: it
+# covers nothing, and must not be reported.
+python3 - <<'PY'
+import zipfile
+src = zipfile.ZipFile("office-covered__writer-box.odt")
+with zipfile.ZipFile("behind.odt", "w") as z:
+    for item in src.infolist():
+        data = src.read(item.filename)
+        if item.filename == "content.xml":
+            data = data.replace(b'style:run-through="foreground"', b'style:run-through="background"')
+        z.writestr(item, data)
+PY
+soffice --headless --convert-to docx behind.odt >/dev/null 2>&1 || true
+[ -s behind.docx ] && mv behind.docx clean__libreoffice-word-box-behind.docx
+rm -f behind.odt
