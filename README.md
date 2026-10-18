@@ -89,7 +89,12 @@ In the file it often is.
   keeps it whole. A box drawn over a picture is a second object on top of
   it. An artistic effect, Blur among them, and Remove Background, keep the
   picture as it was beside the one with the effect, as an HD Photo, so the
-  effect can be reset.
+  effect can be reset. Export the document to PDF with LibreOffice and the
+  cropped picture goes into the PDF whole, shown through a clip.
+- **PDF.** A black rectangle drawn over a picture is drawn after it, and
+  the picture is still there underneath. A redaction marked in a PDF
+  editor and never applied is a note saying where the redaction would go.
+  A filled comment box is an annotation, and lifts off.
 - **Diagrams.** draw.io and Excalidraw put a copy of the drawing inside
   the PNG or SVG they export so it can be edited again, and the copy is the
   drawing, not the picture: every page, every hidden layer, the whole of
@@ -120,7 +125,12 @@ before pressing send, because nothing checks them together.
 - [x-ray](https://github.com/freelawproject/x-ray) finds text under black
   boxes in PDFs, and [unmasker](https://github.com/osint-shifu/unmasker)
   does that and more in documents, with a look at a JPEG's thumbnail.
-  Neither reads screenshots, phone photos, slides' crops or diagrams.
+  Neither reads screenshots, phone photos, slides' crops or diagrams, and
+  in a PDF both look at text. Pentimento looks at the pictures in it: a
+  box over a picture, a clip that hides most of one, a redaction marked
+  and not applied, and every JPEG inside, thumbnail and all. Text under
+  boxes it leaves to them. x-ray's own test files are among the samples,
+  and the ones it calls clean are clean here too.
 - [Baggage](https://github.com/NissanBoss/Baggage), from this same series,
   says what metadata a file carries, and notices a thumbnail of a
   different shape and bytes after the end. Pentimento is the other half:
@@ -157,7 +167,20 @@ one is for; Samsung's trailer, read the way ExifTool's Samsung module reads
 it; and whatever else is after the end. Every copy of the picture is found
 inside the picture, at whatever size and place fits, and compared with it,
 for a part where the picture is flat and the copy is not, and for how much
-more of the scene the copy shows.
+more of the scene the copy shows; and when the picture is smaller than its
+EXIF says the camera made it, that is said too, as editors mostly copy the
+EXIF as it was. The end of an earlier JPEG behind this one, which is what
+the Snipping Tool leaves when it saves a crop as JPEG, is decoded with the
+tables of the picture in front, which the two share: the report says how
+many rows of the old picture are there and how wide it was. Those rows are
+exact but for their overall brightness and tint, which were in the part
+the new picture wrote over.
+
+**PDF.** Every picture drawn on every page: a filled rectangle drawn over
+it afterwards, unless the pixels under the rectangle are blank, which is
+what a redaction that was applied leaves; a clip that shows only part of
+it; areas marked for redaction and never redacted; filled annotations over
+the page; and every JPEG in the file, checked like any other.
 
 **HEIC.** The list of what it keeps, for depth maps and mattes of the
 people in a Portrait photo. Not the pixels.
@@ -165,7 +188,11 @@ people in a Portrait photo. Not the pixels.
 **Word, PowerPoint, Excel and LibreOffice.** Every picture placed in a
 document, slide or sheet: its crop, a filled shape drawn on top of it, an
 artistic effect with the picture before it kept beside it, and the picture
-file itself, checked like any other.
+file itself, checked like any other. In Word and Writer, where shapes sit
+in the flow of the text, a shape and a picture are compared when both are
+anchored in the same paragraph, or both to the page, which is where a box
+drawn over a picture ends up; a shape behind the text covers nothing and
+is not reported.
 
 **SVG.** A draw.io copy in its `content` attribute, an Excalidraw scene in
 its payload, and every picture embedded as a data URL, checked like any
@@ -174,7 +201,18 @@ other.
 **The pixels.** Mosaics, found as blocks on a grid and stacked rows that
 change only every block; and boxes that let what is under them through,
 found as rectangles with a sharp edge all round and a faint spread of
-levels inside, in strokes.
+levels inside, in strokes. A box nearly the colour of the page, black over
+dark mode or white over white, has no edge sharp enough to end a region
+at, and is found instead by its edges: straight lines along which the
+colour steps by the same few levels, with square corners, which a
+disabled button's rounded ones are not, and a step that holds a few pixels
+either side, which a ruled line's does not. In a JPEG, a mosaic's edges
+can be a pixel off the grid, and that is allowed only in a picture of a
+screen, told by its perfectly flat blocks rather than by its EXIF, since
+a phone photo sent through a chat app has none left; and a mosaic in a
+JPEG has to be sixteen blocks across. Mosaics that all sit on one grid of
+the whole picture are its own pixels, as in a game scaled up, and are
+left out.
 
 The exit code is 1 when something taken out is still in a file, 0 when
 nothing turned up, 2 when the files could not be opened, and 3 when
@@ -190,46 +228,92 @@ which rule.
 ([`samples.yml`](.github/workflows/samples.yml)): the Snipping Tool's own
 cropped files with their originals, the demonstration files of a public
 recovery tool, Depix's test pictures, Excalidraw's fixtures, Office test
-files from Apache POI and LibreOffice, HEIC photos from iPhones, and
-phone photos from Wikimedia Commons. Forty-seven files, each with what must
-be found in it and nothing else. For the two Windows 11 screenshots whose
-originals were published, every byte said to come back is compared with
-the original: 2,437,785 bytes in one and 378 in the other, all of them
-right.
+files from Apache POI and LibreOffice, HEIC photos from iPhones, phone
+photos from Wikimedia Commons, and x-ray's test PDFs. Sixty-one files, each
+with what must be found in it and nothing else. For the two Windows 11
+screenshots whose originals were published, every byte said to come back
+is compared with the original: 2,437,785 bytes in one and 378 in the
+other, all of them right. For the two Snipping Tool JPEGs whose originals
+were published, the rows decoded from the old picture's end are compared
+with the same rows of the original, and correlate at 0.9985 and 0.9999.
 
 **Files made with the tools people use**, on every push: a letter set in
 ImageMagick with a thumbnail put in by ExifTool, then a box drawn over a line
 of it by ImageMagick, a strip cropped out by jpegtran, a box at
-ninety per cent, a mosaic, and a crop saved over the old file by Pillow.
+ninety per cent, a mosaic, and a crop saved over the old file by Pillow; PDFs
+made by PyMuPDF with a box over a picture, a redaction marked and the same
+one applied, and a filled comment box; a slide and two documents with
+cropped pictures exported to PDF by LibreOffice; and a Writer document with
+a box over its picture, saved as Word by LibreOffice, in front of the
+picture and behind it.
 
-**Hundreds of ordinary files**, once a week
+**A bench of covers**, on every push
+([`bench.sh`](testdata/bench.sh)): pages of text in four looks, light,
+dark, serif and mono, each with one line covered by a box at every opacity
+from eighty to ninety nine per cent in black, white and yellow, and by a
+mosaic of every block size from four to twenty, saved as PNG and as JPEG
+at ninety. What is found:
+
+| | PNG | JPEG |
+|---|---|---|
+| Boxes that let the line through | 57 of 84 | 33 of 84 |
+| Mosaics | 28 of 28 | 17 of 28 |
+
+None of the clean pages has anything found on it. A box at ninety nine per
+cent is two levels from solid and is never found; nor is a white box on a
+pure white page, which has no edge at all. In a JPEG, a box under about
+ten levels from the page is lost in the noise around the text, and mosaics
+of blocks smaller than JPEG's own eight are not looked for, nor ones
+narrower than sixteen blocks. The test fails if any of the four totals
+drops below a floor a little under these, so a change that loses some
+has to say so. The first release found 26 and 20 of the boxes and 25 and
+none of the mosaics.
+
+**Thousands of ordinary files**, once a week
 ([`calibrate.yml`](.github/workflows/calibrate.yml)), from Wikimedia
-Commons as their owners uploaded them. The last run, 17 October 2026:
+Commons as their owners uploaded them, one job per group. Every photo is
+also looked at a second time as if its EXIF were gone, which is how a
+chat app sends it. The last run, 18 October 2026:
 
-- **450 Pixel photos** (Pixel 6, 7 and 8): a motion video in 25, the photo
-  before Portrait Light in 1, depth maps in 2, a thumbnail showing more of
-  the scene than the photo in 26, and one mosaic.
-- **450 Samsung photos** (S10, S21 Ultra, S23): the phone's trailer in 244,
-  nearly always with the country of the mobile network; a motion video in
-  12; the unblurred shots from before Live Focus in 2; depth maps in 2; a
-  thumbnail showing more than the photo in 11, and differing from it in
-  one place in 2.
-- **450 iPhone photos** (iPhone 12, 13 and 14): a thumbnail showing more
-  than the photo in 2.
-- **283 screenshots** of Android, iOS, Windows, macOS and Ubuntu: Samsung's
-  trailer, naming the app that was open, in 5.
+- **1,060 Pixel photos** (Pixel 6, 7 and 8): a motion video in 96, the
+  photo before Portrait or Portrait Light in 16, depth maps in 8, a
+  thumbnail showing more of the scene than the photo in 35, and one
+  mosaic.
+- **1,350 Samsung photos** (S10, S21 Ultra, S23): the phone's trailer in
+  664, nearly always with the country of the mobile network; a motion
+  video in 22; the unblurred shots from before Live Focus in 2; depth maps
+  in 2; a thumbnail showing more than the photo, or differing from it in
+  one place, in 16.
+- **1,350 iPhone photos** (iPhone 12, 13 and 14): a thumbnail showing more
+  than the photo in 17, and two mosaics.
+- **641 screenshots** of Android, iOS, Windows, macOS and Ubuntu: Samsung's
+  trailer, naming the app that was open, in 5; four boxes over text and
+  one mosaic.
 - **89 camera files** from exif-samples: a thumbnail showing more than the
   picture in 2.
 
-Every thumbnail that shows more than its photo and was looked at by hand
-was a real crop: photos trimmed before they were uploaded, in an editor
-that left the thumbnail as it was. One had been cropped to take a woman
-off a tram platform, and the thumbnail inside it still showed her. The
-two Samsung photos that differ from their thumbnails in one place could
-not be told apart, by eye, from what the phone's HDR does to a thumbnail.
-That run also found four boxes over text in the screenshots and one in an
-iPhone photo; none of them was one, and the rules that let them through
-were changed after it (below).
+With their EXIF gone, the photos gave one more mosaic and one more box
+between them. Of the JPEGs, 92 of the 126 screenshots were taken for
+pictures of a screen, and 16 of the 3,838 photos.
+
+The thumbnails were checked against what the EXIF says. In 18 of the 71,
+the photo is smaller than the EXIF says the camera made it: crops, and 10
+of them iPhone photos cropped and saved by iOS itself, which left the
+thumbnail of the whole photo in. In 45, the photo is the size the camera
+made it, saved by the phone's own software when it was taken, and in
+series: Pixel photos whose thumbnails all show the same eleven or twenty
+two per cent more, Samsung photos the same six or seven. That is the
+phone, most likely its digital zoom, and the report says so; the thumbnail
+still has what the photo leaves out. The rest were saved later by an
+editor, or have no size to go by. Earlier runs looked at by hand found a
+photo cropped to take a woman off a tram platform, with her still in the
+thumbnail.
+
+The mosaic in the Pixel photos is most likely the one the first release
+found, a karaoke machine's screen showing its own pixelated preview. The
+two in iPhone photos and the boxes in the screenshots were not looked at
+by hand; the first release's run reported four boxes in fewer
+screenshots, and none of those was a cover.
 
 What the calibration taught, all of it in the code:
 
@@ -262,13 +346,26 @@ What the calibration taught, all of it in the code:
   line of one window, came out as fifteen boxes over text. Text under a
   cover is marks of every shape, and a pattern of lines from side to side
   is no longer taken for it. After that, nothing turned up in any of them.
+- Looking for boxes nearly the colour of the page, the same screenshots
+  gave forty one: disabled buttons, which are dim rectangles with dim
+  text and rounded corners, and the rows of a background ruled in squares,
+  whose edges are lines. A drawn box has square corners and an edge that
+  holds a few pixels either side, and after that nothing turned up again.
+- Letting a JPEG's mosaic be a pixel off its grid, as the bench needs,
+  found hundreds of mosaics in phone photos: JPEG's own blocks of eight in
+  smooth places, lines of text, grass. So photos keep the first release's
+  rules, a JPEG is held to the looser ones only when it is a picture of a
+  screen, told by its perfectly flat blocks, and a mosaic in a JPEG must be
+  sixteen blocks across. Telling screens by blocks flat to three levels
+  took a fifth of the iPhone photos for screens, once their EXIF was off.
+- A game drawn in big pixels and scaled up three times is a mosaic from
+  edge to edge; one screenshot came out as twenty. Mosaics on one grid of
+  the whole picture are now taken for its own.
 - Of a hundred and nineteen draw.io SVGs found on GitHub, three carry
   pages the picture does not show. Of a hundred and two Excalidraw SVGs,
   none carries a deleted element (current versions leave them out of the
   export) and one carries a cropped image whole.
 
-The one real mosaic in the photos was a karaoke machine's screen,
-photographed while it showed its own pixelated preview. It was found.
 
 ## Running it
 
@@ -304,11 +401,18 @@ yourself avoids the question.
   photo out of focus, and a filled-in background from a real one, is not
   something this can do well enough to say. A blur that kept the original
   in the file, as Portrait does, is found by the original.
-- **In photos a camera took, boxes that let things through are not looked
-  for**, because the grain of real photos made more false ones than the
-  calibration ever found true ones. Screenshots, PNG or JPEG, are looked
-  at, for boxes of forty pixels across and more, covering at about
-  eighty five and ninety seven per cent.
+- **In photos, boxes that let things through are not looked for**, with
+  their EXIF or without it, because the grain of real photos made more
+  false ones than the calibration ever found true ones. Screenshots are
+  looked at, for boxes of forty pixels across and more, covering at
+  between about eighty and ninety seven per cent: every PNG, and a JPEG
+  when it is told for a picture of a screen, which a quarter of the
+  calibration's JPEG screenshots were not. The bench above says how many
+  boxes are found.
+- **A mosaic in a JPEG is found when it is sixteen blocks across or
+  more, with blocks of eight pixels and up.** A word pixelated small in a
+  JPEG is missed; looser rules found hundreds of mosaics in ordinary
+  photos.
 - **A cover at the very edge of a photo is missed by the thumbnail
   comparison**, in the outer six per cent, where lens correction moves a
   photo against its own thumbnail.
@@ -319,17 +423,22 @@ yourself avoids the question.
   exactly. Windows 10's Snip & Sketch wrote whole screenshots as one
   compressed block, and its leftovers cannot be decoded by this or by any
   public tool: they are reported as there, not as readable.
-- **The end of an earlier JPEG** is found and not decoded.
+- **The end of an earlier JPEG is decoded only when it shares the tables
+  of the picture in front**, as the Snipping Tool's do, and only when it
+  is baseline JPEG; otherwise it is found and not decoded. Its brightness
+  and tint are not known, as they were in the part written over.
 - **HEIC is read for what it keeps, not for its pixels**, which are HEVC
   and not something the standard library decodes. No public Portrait HEIC
   was found to test the mattes against, so they are recognised by the names
   Apple documents and tested on a file built here.
-- **PDFs, WebP, AVIF, TIFF and Photoshop files are not read**, and are
-  listed as not read. For PDFs there are Baggage and x-ray.
-- **Shapes over pictures are found in PowerPoint and Excel**, where shapes
-  have positions on the page. Word's floating shapes and LibreOffice's are
-  not compared with the pictures under them. Slide layouts and masters
-  are left out: they come with the template.
+- **In a PDF, text under a box is not looked for**, only pictures; that is
+  what Baggage and x-ray do. WebP, AVIF, TIFF and Photoshop files are not
+  read, and are listed as not read.
+- **Shapes over pictures in Word and Writer are compared only when they
+  are placed from the same thing**, the same paragraph or the page; a
+  shape placed from the margin over a picture placed in a line is left
+  alone rather than guessed at. Slide layouts and masters are left out:
+  they come with the template.
 - **draw.io's copy is checked for pages and hidden layers**, not for what
   lies outside the area exported.
 

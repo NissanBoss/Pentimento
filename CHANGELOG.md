@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.1
+
+What v1 named as its weak points, worked on.
+
+- **PDF:** every picture on every page, for a filled rectangle drawn over
+  it (not when the pixels under it are blank, which is what an applied
+  redaction leaves), a clip showing only part of it, redactions marked and
+  never applied, filled annotations over the page, and every JPEG in the
+  file checked like any other. LibreOffice's PDF export of a cropped
+  picture, which puts the whole picture in, is found that way.
+- **The end of an earlier JPEG is decoded**, with the tables of the
+  picture in front: how many rows of the old picture are there and how
+  wide it was, checked against the Snipping Tool's published originals.
+- **Word and Writer:** a filled shape over a picture anchored in the same
+  paragraph, or both on the page, in front of it.
+- **Boxes nearly the colour of the page**, black over dark mode, white or
+  yellow over a light page, found by their edges, with disabled buttons
+  and ruled backgrounds told apart.
+- **Mosaics in JPEG**, which v1 found none of on the bench, in pictures
+  of screens, sixteen blocks across and up; photos are held to v1's
+  rules. Screens are told from photos by their perfectly flat blocks, not
+  by EXIF, which chat apps strip, and boxes are no longer looked for in
+  photos without EXIF either.
+- **A picture's own grid**, a game scaled up three times, is no longer
+  taken for mosaics.
+- **A JPEG of grey text is read as a JPEG**, where v1 read it as a PNG.
+- **A thumbnail that shows more** is backed up by the EXIF: when the photo
+  is smaller than the camera made it, that is said; when it is the size
+  the camera made it and was saved when it was taken, the report says the
+  phone most likely did it, as a digital zoom does.
+- **The bench:** 112 covers on four kinds of page, each saved as PNG and
+  as JPEG, counted on every push, with floors the counts may not drop
+  under. Boxes found: 57 of 84 in PNG, 33 in JPEG (v1: 26 and 20).
+  Mosaics: 28 of 28 and 17 (v1: 25 and none).
+- **The calibration** is three times the size, one job per group, also
+  looks at every photo as if its EXIF were gone, and logs what the EXIF
+  says about how each photo with a thumbnail finding was saved.
+
 ## v1
 
 The first release.
