@@ -35,6 +35,9 @@ func TestCalibration(t *testing.T) {
 		sort.Strings(files)
 		counts := map[string]int{}
 		read, gaps, jpegs, screens := 0, 0, 0, 0
+		// How many would be taken for screens if a share of perfectly flat
+		// blocks were asked for too, of one, three, five and ten per cent.
+		var flatAlso [4]int
 		var loud []string
 		for _, f := range files {
 			data, err := os.ReadFile(f)
@@ -54,16 +57,24 @@ func TestCalibration(t *testing.T) {
 				if img, err := decodePicture(data); err == nil {
 					jpegs++
 					b := img.Bounds()
-					if screenLike(packed(img), b.Dx(), b.Dy()) {
+					px := packed(img)
+					if screenLike(px, b.Dx(), b.Dy()) {
 						screens++
+						zero, _, _ := flatShares(px, b.Dx(), b.Dy())
+						for i, at := range []float64{0.01, 0.03, 0.05, 0.10} {
+							if zero >= at {
+								flatAlso[i]++
+							}
+						}
 					}
 					if g != "screenshots" {
 						bare := newRun(shower{})
 						bare.pixelsOf(filepath.Base(f), img, false, false)
+						zero, one, three := flatShares(px, b.Dx(), b.Dy())
 						for k, hits := range bare.hits {
 							counts["stripped "+k]++
 							for _, h := range hits {
-								loud = append(loud, fmt.Sprintf("%s/%s: stripped %s: %s", g, filepath.Base(f), k, h.what))
+								loud = append(loud, fmt.Sprintf("%s/%s: stripped %s: %s [flat %.0f%% %.0f%% %.0f%%]", g, filepath.Base(f), k, h.what, 100*zero, 100*one, 100*three))
 							}
 						}
 					}
@@ -93,7 +104,7 @@ func TestCalibration(t *testing.T) {
 		}
 		// How many JPEGs are taken for pictures of a screen, which decides
 		// the rules they are held to.
-		table = append(table, fmt.Sprintf("%-12s %4d read, %d with a gap, %d of %d JPEGs taken for screens: %s", g, read, gaps, screens, jpegs, strings.Join(parts, ", ")))
+		table = append(table, fmt.Sprintf("%-12s %4d read, %d with a gap, %d of %d JPEGs taken for screens (%v with flat blocks too): %s", g, read, gaps, screens, jpegs, flatAlso, strings.Join(parts, ", ")))
 		// Every loud finding, by file number, so each one can be looked at
 		// by hand: a rule is only kept when the ones it finds are real.
 		for _, l := range loud {

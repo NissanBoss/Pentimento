@@ -19,7 +19,7 @@ var benchFloors = map[string]int{
 	"box png all":    55,
 	"box jpg all":    28,
 	"mosaic png all": 28,
-	"mosaic jpg all": 18,
+	"mosaic jpg all": 17,
 }
 
 func TestBench(t *testing.T) {
@@ -80,4 +80,9 @@ func TestBench(t *testing.T) {
 		lines = append(lines, fmt.Sprintf("%-28s %3d of %3d", k, by[k].found, by[k].of))
 	}
 	t.Log("\n" + strings.Join(lines, "\n"))
+	for k, floor := range benchFloors {
+		if by[k] != nil && by[k].found < floor {
+			t.Errorf("%s: %d found, the floor is %d", k, by[k].found, floor)
+		}
+	}
 }

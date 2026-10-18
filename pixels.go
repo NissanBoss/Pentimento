@@ -342,8 +342,9 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, g grain) (mos
 	// is flat blocks of eight on that same grid, a mosaic in every way but
 	// one: neighbouring blocks differ by a few levels, where the blocks of
 	// a mosaic over text differ by tens. Two Pixel photos of six had skies
-	// like that.
-	if g != exactColours && block%8 == 0 && r.Min.X%8 == 0 && r.Min.Y%8 == 0 && medianStep(px, w, r, block) < 16 {
+	// like that. The region found can start anywhere on that grid, and in
+	// iPhone photos without their EXIF most did.
+	if g != exactColours && block%8 == 0 && medianStep(px, w, r, block) < 16 {
 		return mosaic{}, false
 	}
 	// The grid a JPEG of a photo is full of, with an edge let a pixel off
@@ -369,12 +370,13 @@ func checkMosaic(px []uint32, w int, r image.Rectangle, block int, g grain) (mos
 	if g != exactColours && r.Dx() < max(64, w/60) {
 		return mosaic{}, false
 	}
-	// A line of text in a JPEG of a screen, eight to twelve blocks of JPEG's
-	// own eight across and two down, came out as a mosaic in twenty one of
-	// six hundred and forty one real screenshots, and in a fifth of a
-	// thousand iPhone photos without their EXIF; at sixteen across and up,
-	// one screenshot was left.
-	if g == screenJPEG && across < 16 {
+	// A line of text in a JPEG, eight to twelve blocks of JPEG's own eight
+	// across and two down, came out as a mosaic in twenty one of six hundred
+	// and forty one real screenshots, and in a fifth of a thousand iPhone
+	// photos without their EXIF; at sixteen across and up, one screenshot
+	// was left. In iPhone photos with their EXIF, it took out three of six,
+	// the three narrowest.
+	if g != exactColours && across < 16 {
 		return mosaic{}, false
 	}
 	if colours < 4 || across < 6 || across*bands < 12 {
@@ -1020,14 +1022,14 @@ func sortCovers(out []cover) []cover {
 // flat to three alone took a fifth of the iPhone photos of the
 // calibration for screens, once their EXIF was off.
 func screenLike(px []uint32, w, h int) bool {
-	one, three := flatShares(px, w, h)
+	_, one, three := flatShares(px, w, h)
 	return one >= 1.0/6 && three >= 0.25
 }
 
-// flatShares gives the shares of the blocks of eight that are flat to one
-// level and to three.
-func flatShares(px []uint32, w, h int) (one, three float64) {
-	flat1, flat3, all := 0, 0, 0
+// flatShares gives the shares of the blocks of eight that are flat, flat
+// to one level and flat to three.
+func flatShares(px []uint32, w, h int) (zero, one, three float64) {
+	flat0, flat1, flat3, all := 0, 0, 0, 0
 	for y := 0; y+8 <= h; y += 8 {
 		for x := 0; x+8 <= w; x += 8 {
 			lo, hi := 255, 0
@@ -1038,6 +1040,9 @@ func flatShares(px []uint32, w, h int) (one, three float64) {
 				}
 			}
 			all++
+			if hi == lo {
+				flat0++
+			}
 			if hi-lo <= 1 {
 				flat1++
 			}
@@ -1047,7 +1052,7 @@ func flatShares(px []uint32, w, h int) (one, three float64) {
 		}
 	}
 	if all == 0 {
-		return 0, 0
+		return 0, 0, 0
 	}
-	return float64(flat1) / float64(all), float64(flat3) / float64(all)
+	return float64(flat0) / float64(all), float64(flat1) / float64(all), float64(flat3) / float64(all)
 }
