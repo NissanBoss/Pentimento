@@ -252,7 +252,31 @@ func mosaics(px []uint32, w, h int, g grain) []mosaic {
 		}
 		open = next
 	}
-	return mergeMosaics(done)
+	return ownGrid(mergeMosaics(done))
+}
+
+// ownGrid leaves out mosaics that are the picture's own grid: four or more
+// with the same block on the same grid of the whole picture. A game drawn
+// in big pixels and scaled up three times is blocks of three everywhere,
+// and one such screenshot came out as twenty mosaics; a mosaic laid over
+// part of a picture starts where the cover does, and two of them landing
+// on one grid is chance.
+func ownGrid(ms []mosaic) []mosaic {
+	type grid struct{ block, x, y int }
+	n := map[grid]int{}
+	at := func(m mosaic) grid {
+		return grid{m.block, m.r.Min.X % m.block, m.r.Min.Y % m.block}
+	}
+	for _, m := range ms {
+		n[at(m)]++
+	}
+	var out []mosaic
+	for _, m := range ms {
+		if n[at(m)] < 4 {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 // checkMosaic decides whether a stack of equal runs is a mosaic: blocks
@@ -1015,15 +1039,18 @@ func sortCovers(out []cover) []cover {
 	return out
 }
 
-// screenLike is whether a JPEG is of a screen: of its blocks of eight, a
-// sixth or more flat to a level and a quarter flat to three. A screen is
-// areas of one colour, and a JPEG keeps most of them to the level. A
-// smooth photo is flat to three levels too, but rarely to one: a quarter
-// flat to three alone took a fifth of the iPhone photos of the
-// calibration for screens, once their EXIF was off.
+// screenLike is whether a JPEG is of a screen: a fifth or more of its
+// blocks of eight perfectly flat, and three in four of the blocks flat to
+// three levels perfectly flat too. A screen is areas of one colour, which
+// a JPEG keeps to the level, so on a screen nearly every flat block is
+// perfectly flat. A smooth photo has many more blocks flat to three levels
+// than to none: a quarter flat to three took a fifth of the calibration's
+// iPhone photos for screens once their EXIF was off, and the mosaics and
+// boxes found in those photos were nearly all in ones where fewer than
+// three in four of those blocks were perfectly flat.
 func screenLike(px []uint32, w, h int) bool {
-	_, one, three := flatShares(px, w, h)
-	return one >= 1.0/6 && three >= 0.25
+	zero, _, three := flatShares(px, w, h)
+	return zero >= 0.2 && zero*4 >= three*3
 }
 
 // flatShares gives the shares of the blocks of eight that are flat, flat
